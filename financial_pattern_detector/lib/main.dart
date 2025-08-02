@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'services/platform_database_service.dart';
 import 'ui/screens/main_screen.dart';
 
 void main() async {
@@ -7,6 +8,9 @@ void main() async {
 
   // Initialize Hive for local storage
   await Hive.initFlutter();
+
+  // Initialize platform-specific database service
+  await PlatformDatabaseService.instance.initialize();
 
   runApp(const FinancialPatternDetectorApp());
 }

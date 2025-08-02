@@ -37,16 +37,16 @@ dependencies:
   # HTTP requests for Yahoo Finance API
   http: ^1.1.0
   
-  # Local storage and database
+  # Local storage and database (web-compatible)
   sqflite: ^2.3.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   shared_preferences: ^2.0.15
   
-  # Secure storage for API keys
+  # Secure storage for API keys (web-compatible)
   flutter_secure_storage: ^9.0.0
   
-  # Notifications
+  # Notifications (web-compatible)
   flutter_local_notifications: ^17.0.0
   
   # Email functionality

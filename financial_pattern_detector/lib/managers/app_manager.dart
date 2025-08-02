@@ -1,22 +1,31 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/app_settings.dart';
 import '../models/pattern_detection.dart';
 import '../models/stock_data.dart';
 import '../services/yahoo_finance_service.dart';
 import '../services/pattern_analyzer.dart';
-import '../services/database_service.dart';
+import '../services/platform_database_service.dart';
+import '../services/alert_manager_web.dart';
 import '../managers/alert_manager.dart';
 import '../managers/settings_manager.dart';
 
 class AppManager {
   static final AppManager _instance = AppManager._internal();
   factory AppManager() => _instance;
-  AppManager._internal();
+  AppManager._internal() {
+    // Initialize platform-specific alert manager
+    if (kIsWeb) {
+      _alertManager = AlertManagerWeb();
+    } else {
+      _alertManager = AlertManager();
+    }
+  }
 
   final YahooFinanceService _yahooService = YahooFinanceService();
   final PatternAnalyzer _patternAnalyzer = PatternAnalyzer();
-  final DatabaseService _databaseService = DatabaseService();
-  final AlertManager _alertManager = AlertManager();
+  final PlatformDatabaseService _databaseService = PlatformDatabaseService.instance;
+  late final dynamic _alertManager;
   final SettingsManager _settingsManager = SettingsManager();
 
   Timer? _analysisTimer;
@@ -142,7 +151,7 @@ class AppManager {
         _updateStatus('Analyzing patterns for $symbol...');
 
         // Store in database
-        await _databaseService.insertStockData(stockSeries.data);
+        await _databaseService.insertStockDataBatch(stockSeries.data);
 
         // Analyze patterns
         final patterns = await _patternAnalyzer.analyzePatterns(
@@ -157,8 +166,8 @@ class AppManager {
         for (final pattern in newPatterns) {
           await _databaseService.insertPatternMatch(pattern);
           await _alertManager.sendPatternAlert(
-            pattern: pattern,
-            settings: settings,
+            pattern,
+            settings,
           );
         }
 
