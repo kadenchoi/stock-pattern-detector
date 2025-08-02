@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Financial Pattern Detector",
+			"type": "shell",
+			"command": "flutter run -d macos",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [
+				"$dart-flutter"
+			]
+		}
+	]
+}
