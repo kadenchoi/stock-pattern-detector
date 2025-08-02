@@ -2,7 +2,13 @@
 
 ## Current Status: ✅ FULLY FUNCTIONAL
 
-The Financial Pattern Detector is now running successfully on macOS with all core features working:
+The Financial Pattern Detector is now running successfully on **macOS and Web** with all core features working:
+
+### 🌐 Platform Support
+
+- **macOS**: Native desktop application with full functionality
+- **Web**: Browser-based application accessible at any URL
+- Platform-aware architecture automatically adapts storage and notifications
 
 ### ✅ Working Features
 
@@ -10,6 +16,7 @@ The Financial Pattern Detector is now running successfully on macOS with all cor
    - Successfully connects to Yahoo Finance API
    - Fetches OHLCV data for any stock symbol
    - Supports multiple time periods (1D, 1W, 1M, 3M, 6M, 1Y)
+   - Works identically on macOS and web platforms
 
 2. **Advanced Pattern Detection**
    - Detects 10+ technical chart patterns including:
@@ -19,23 +26,31 @@ The Financial Pattern Detector is now running successfully on macOS with all cor
      - Ascending/Descending Triangles
      - Flags, Wedges, Pennants
    - Real-time analysis with confidence scoring
+   - Pattern analysis engine works on all platforms
 
-3. **Customizable Watchlist**
+3. **Cross-Platform Data Storage**
+   - **macOS**: SQLite database for robust local storage
+   - **Web**: Hive-based storage for browser compatibility
+   - Automatic platform detection and appropriate storage selection
+   - Persistent watchlists and pattern history
+
+4. **Customizable Watchlist**
    - Add/remove stock symbols
-   - Persistent storage using SharedPreferences
+   - Persistent storage across sessions
    - Automatic analysis for all watchlist symbols
+   - Syncs between platform instances
 
-4. **Automated Monitoring**
+5. **Platform-Aware Notifications**
+   - **macOS**: Native system notifications and email alerts
+   - **Web**: HTML5 browser notifications and in-app alerts
+   - Automatic fallback for unsupported features
+
+6. **Automated Monitoring**
    - Configurable analysis intervals (1min to 1hr)
    - Background pattern detection
    - Automatic alerts when patterns are detected
 
-5. **Alert System**
-   - macOS native notifications
-   - Email alerts (configurable)
-   - Pattern-based triggers
-
-6. **Local Data Storage**
+7. **Local Data Storage**
    - SQLite database for historical data
    - Efficient caching and cleanup
    - Offline pattern analysis capability
@@ -48,38 +63,87 @@ The Financial Pattern Detector is now running successfully on macOS with all cor
 - **Patterns Found:** 8 patterns detected
 - **Analysis Status:** Running every 15 minutes
 
-### 🚀 How to Use
+### 🚀 Quick Start Guide
 
-1. **Launch the App**
-   ```bash
-   cd financial_pattern_detector
-   flutter run -d macos
-   ```
+#### Running on macOS (Desktop)
+1. Clone the repository: `git clone https://github.com/kadenchoi/stock-pattern-detector.git`
+2. Navigate to the Flutter project: `cd stock-pattern-detector/financial_pattern_detector`
+3. Install dependencies: `flutter pub get`
+4. Run on macOS: `flutter run -d macos`
 
-2. **Add Stocks to Watchlist**
-   - Use the UI to add stock symbols (e.g., AAPL, GOOGL, TSLA)
-   - Symbols are automatically validated and monitored
+#### Running on Web (Browser)
+1. Follow steps 1-3 above
+2. Build for web: `flutter build web`
+3. Run web server: `flutter run -d web-server --web-port 8080`
+4. Open browser to: `http://localhost:8080`
 
-3. **Configure Settings**
-   - Access Settings tab to customize:
-     - Analysis frequency
-     - Pattern detection sensitivity
-     - Alert preferences
-     - Data period for analysis
+#### Alternative Web Deployment
+- Build: `flutter build web`
+- Deploy `build/web/` folder to any web server
+- Access from any modern browser (Chrome, Firefox, Safari, Edge)
+
+### 📱 How to Use
+
+1. **Add Stocks to Watchlist**
+   - Click the "+" button or use the Add Symbol field
+   - Enter stock symbols (e.g., AAPL, GOOGL, MSFT)
+   - Symbols are saved automatically
+
+2. **Configure Settings** 
+   - Access settings via the Settings tab
+   - Adjust analysis frequency (1min to 1hr intervals)
+   - Set pattern detection sensitivity
+   - Configure notification preferences
+   - Choose data period for analysis
+
+3. **Enable Notifications**
+   - **macOS**: Automatically requests system notification permissions
+   - **Web**: Browser will prompt for notification permissions
+   - Test notifications with the "Test Alert" button
 
 4. **Monitor Patterns**
    - View detected patterns in the Patterns tab
    - Check confidence scores and pattern types
    - Review historical pattern data
+   - Patterns are analyzed automatically at set intervals
 
 ### 🔧 Technical Architecture
 
 - **Frontend:** Flutter with Material Design 3
-- **Data Source:** Yahoo Finance API
-- **Pattern Analysis:** Custom technical analysis algorithms  
-- **Storage:** SQLite + SharedPreferences
-- **Notifications:** flutter_local_notifications
-- **Platform:** macOS native app
+- **Platforms:** macOS (native) + Web (browser-based)
+- **Data Source:** Yahoo Finance API (platform-agnostic)
+- **Pattern Analysis:** Custom technical analysis algorithms
+- **Storage:** 
+  - macOS: SQLite database
+  - Web: Hive browser storage
+  - Platform-aware service automatically selects appropriate storage
+- **Notifications:** 
+  - macOS: Native system notifications + email
+  - Web: HTML5 notifications + in-app alerts
+- **Architecture:** Clean, modular design with platform abstraction
+
+### 🌐 Web Platform Features
+
+#### ✅ Fully Supported on Web
+- All stock data fetching and analysis
+- Pattern detection algorithms
+- Watchlist management
+- Real-time notifications (with browser permission)
+- Settings and preferences
+- Interactive charts and visualizations
+- Responsive design for all screen sizes
+
+#### 🔄 Web-Specific Adaptations
+- **Storage**: Uses Hive instead of SQLite for browser compatibility
+- **Notifications**: HTML5 notifications instead of system notifications
+- **Email Alerts**: Shows enhanced in-app alerts (direct email not supported)
+- **Performance**: Optimized for browser JavaScript execution
+
+#### 📋 Browser Requirements
+- Modern browser with JavaScript enabled
+- HTML5 notification support (optional, for alerts)
+- Minimum 1GB RAM recommended
+- Internet connection required for stock data
 
 ### 📊 Supported Patterns
 
