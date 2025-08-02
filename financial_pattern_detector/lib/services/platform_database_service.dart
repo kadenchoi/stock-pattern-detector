@@ -8,10 +8,19 @@ abstract class DatabaseServiceInterface {
   Future<void> initialize();
   Future<void> insertStockData(List<StockData> stockDataList);
   Future<void> insertStockDataBatch(List<StockData> stockDataList);
-  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit});
+  Future<List<StockData>> getStockData(
+      {required String symbol,
+      DateTime? startDate,
+      DateTime? endDate,
+      int? limit});
   Future<StockData?> getLatestStockData(String symbol);
   Future<void> insertPatternMatch(PatternMatch patternMatch);
-  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit});
+  Future<List<PatternMatch>> getPatternMatches(
+      {String? symbol,
+      DateTime? startDate,
+      DateTime? endDate,
+      double? minScore,
+      int? limit});
   Future<PatternMatch?> getPatternMatch(String id);
   Future<void> deletePatternMatch(String id);
   Future<void> deleteOldPatternMatches(DateTime before);
@@ -49,39 +58,61 @@ class PlatformDatabaseService implements DatabaseServiceInterface {
   Future<void> initialize() => _service.initialize();
 
   @override
-  Future<void> insertStockData(List<StockData> stockDataList) => _service.insertStockData(stockDataList);
+  Future<void> insertStockData(List<StockData> stockDataList) =>
+      _service.insertStockData(stockDataList);
 
   @override
-  Future<void> insertStockDataBatch(List<StockData> stockDataList) => _service.insertStockDataBatch(stockDataList);
+  Future<void> insertStockDataBatch(List<StockData> stockDataList) =>
+      _service.insertStockDataBatch(stockDataList);
 
   @override
-  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit}) =>
-      _service.getStockData(symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
+  Future<List<StockData>> getStockData(
+          {required String symbol,
+          DateTime? startDate,
+          DateTime? endDate,
+          int? limit}) =>
+      _service.getStockData(
+          symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
 
   @override
-  Future<StockData?> getLatestStockData(String symbol) => _service.getLatestStockData(symbol);
+  Future<StockData?> getLatestStockData(String symbol) =>
+      _service.getLatestStockData(symbol);
 
   @override
-  Future<void> insertPatternMatch(PatternMatch patternMatch) => _service.insertPatternMatch(patternMatch);
+  Future<void> insertPatternMatch(PatternMatch patternMatch) =>
+      _service.insertPatternMatch(patternMatch);
 
   @override
-  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit}) =>
-      _service.getPatternMatches(symbol: symbol, startDate: startDate, endDate: endDate, minScore: minScore, limit: limit);
+  Future<List<PatternMatch>> getPatternMatches(
+          {String? symbol,
+          DateTime? startDate,
+          DateTime? endDate,
+          double? minScore,
+          int? limit}) =>
+      _service.getPatternMatches(
+          symbol: symbol,
+          startDate: startDate,
+          endDate: endDate,
+          minScore: minScore,
+          limit: limit);
 
   @override
-  Future<PatternMatch?> getPatternMatch(String id) => _service.getPatternMatch(id);
+  Future<PatternMatch?> getPatternMatch(String id) =>
+      _service.getPatternMatch(id);
 
   @override
   Future<void> deletePatternMatch(String id) => _service.deletePatternMatch(id);
 
   @override
-  Future<void> deleteOldPatternMatches(DateTime before) => _service.deleteOldPatternMatches(before);
+  Future<void> deleteOldPatternMatches(DateTime before) =>
+      _service.deleteOldPatternMatches(before);
 
   @override
   Future<void> addToWatchlist(String symbol) => _service.addToWatchlist(symbol);
 
   @override
-  Future<void> removeFromWatchlist(String symbol) => _service.removeFromWatchlist(symbol);
+  Future<void> removeFromWatchlist(String symbol) =>
+      _service.removeFromWatchlist(symbol);
 
   @override
   Future<List<String>> getWatchlist() => _service.getWatchlist();
@@ -93,13 +124,16 @@ class PlatformDatabaseService implements DatabaseServiceInterface {
   Future<void> clearWatchlist() => _service.clearWatchlist();
 
   @override
-  Future<void> deleteOldStockData(DateTime before) => _service.deleteOldStockData(before);
+  Future<void> deleteOldStockData(DateTime before) =>
+      _service.deleteOldStockData(before);
 
   @override
-  Future<int> getStockDataCount(String symbol) => _service.getStockDataCount(symbol);
+  Future<int> getStockDataCount(String symbol) =>
+      _service.getStockDataCount(symbol);
 
   @override
-  Future<int> getPatternMatchCount({String? symbol}) => _service.getPatternMatchCount(symbol: symbol);
+  Future<int> getPatternMatchCount({String? symbol}) =>
+      _service.getPatternMatchCount(symbol: symbol);
 
   @override
   Future<void> close() => _service.close();
@@ -108,7 +142,8 @@ class PlatformDatabaseService implements DatabaseServiceInterface {
   Future<void> deleteDatabase() => _service.deleteDatabase();
 
   @override
-  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) => _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
+  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) =>
+      _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
 }
 
 // Adapter for the original SQLite service
@@ -121,14 +156,21 @@ class _DatabaseServiceAdapter implements DatabaseServiceInterface {
   }
 
   @override
-  Future<void> insertStockData(List<StockData> stockDataList) => _service.insertStockData(stockDataList);
+  Future<void> insertStockData(List<StockData> stockDataList) =>
+      _service.insertStockData(stockDataList);
 
   @override
-  Future<void> insertStockDataBatch(List<StockData> stockDataList) => _service.insertStockData(stockDataList);
+  Future<void> insertStockDataBatch(List<StockData> stockDataList) =>
+      _service.insertStockData(stockDataList);
 
   @override
-  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit}) =>
-      _service.getStockData(symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
+  Future<List<StockData>> getStockData(
+          {required String symbol,
+          DateTime? startDate,
+          DateTime? endDate,
+          int? limit}) =>
+      _service.getStockData(
+          symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
 
   @override
   Future<StockData?> getLatestStockData(String symbol) async {
@@ -137,11 +179,22 @@ class _DatabaseServiceAdapter implements DatabaseServiceInterface {
   }
 
   @override
-  Future<void> insertPatternMatch(PatternMatch patternMatch) => _service.insertPatternMatch(patternMatch);
+  Future<void> insertPatternMatch(PatternMatch patternMatch) =>
+      _service.insertPatternMatch(patternMatch);
 
   @override
-  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit}) =>
-      _service.getPatternMatches(symbol: symbol, startDate: startDate, endDate: endDate, minScore: minScore, limit: limit);
+  Future<List<PatternMatch>> getPatternMatches(
+          {String? symbol,
+          DateTime? startDate,
+          DateTime? endDate,
+          double? minScore,
+          int? limit}) =>
+      _service.getPatternMatches(
+          symbol: symbol,
+          startDate: startDate,
+          endDate: endDate,
+          minScore: minScore,
+          limit: limit);
 
   @override
   Future<PatternMatch?> getPatternMatch(String id) async {
@@ -168,7 +221,8 @@ class _DatabaseServiceAdapter implements DatabaseServiceInterface {
   Future<void> addToWatchlist(String symbol) => _service.addToWatchlist(symbol);
 
   @override
-  Future<void> removeFromWatchlist(String symbol) => _service.removeFromWatchlist(symbol);
+  Future<void> removeFromWatchlist(String symbol) =>
+      _service.removeFromWatchlist(symbol);
 
   @override
   Future<List<String>> getWatchlist() => _service.getWatchlist();
@@ -214,7 +268,8 @@ class _DatabaseServiceAdapter implements DatabaseServiceInterface {
   }
 
   @override
-  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) => _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
+  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) =>
+      _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
 }
 
 // Adapter for the web Hive service
@@ -225,25 +280,40 @@ class _DatabaseServiceWebAdapter implements DatabaseServiceInterface {
   Future<void> initialize() => _service.initialize();
 
   @override
-  Future<void> insertStockData(List<StockData> stockDataList) => _service.insertStockDataBatch(stockDataList);
+  Future<void> insertStockData(List<StockData> stockDataList) =>
+      _service.insertStockDataBatch(stockDataList);
 
   @override
-  Future<void> insertStockDataBatch(List<StockData> stockDataList) => _service.insertStockDataBatch(stockDataList);
+  Future<void> insertStockDataBatch(List<StockData> stockDataList) =>
+      _service.insertStockDataBatch(stockDataList);
 
   @override
-  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit}) =>
-      _service.getStockData(symbol, startDate: startDate, endDate: endDate, limit: limit);
+  Future<List<StockData>> getStockData(
+          {required String symbol,
+          DateTime? startDate,
+          DateTime? endDate,
+          int? limit}) =>
+      _service.getStockData(symbol,
+          startDate: startDate, endDate: endDate, limit: limit);
 
   @override
-  Future<StockData?> getLatestStockData(String symbol) => _service.getLatestStockData(symbol);
+  Future<StockData?> getLatestStockData(String symbol) =>
+      _service.getLatestStockData(symbol);
 
   @override
-  Future<void> insertPatternMatch(PatternMatch patternMatch) => _service.insertPatternMatch(patternMatch);
+  Future<void> insertPatternMatch(PatternMatch patternMatch) =>
+      _service.insertPatternMatch(patternMatch);
 
   @override
-  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit}) async {
+  Future<List<PatternMatch>> getPatternMatches(
+      {String? symbol,
+      DateTime? startDate,
+      DateTime? endDate,
+      double? minScore,
+      int? limit}) async {
     // Convert minScore to not supported - just filter afterward if needed
-    final patterns = await _service.getPatternMatches(symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
+    final patterns = await _service.getPatternMatches(
+        symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
     if (minScore != null) {
       return patterns.where((p) => p.matchScore >= minScore).toList();
     }
@@ -251,19 +321,22 @@ class _DatabaseServiceWebAdapter implements DatabaseServiceInterface {
   }
 
   @override
-  Future<PatternMatch?> getPatternMatch(String id) => _service.getPatternMatch(id);
+  Future<PatternMatch?> getPatternMatch(String id) =>
+      _service.getPatternMatch(id);
 
   @override
   Future<void> deletePatternMatch(String id) => _service.deletePatternMatch(id);
 
   @override
-  Future<void> deleteOldPatternMatches(DateTime before) => _service.deleteOldPatternMatches(before);
+  Future<void> deleteOldPatternMatches(DateTime before) =>
+      _service.deleteOldPatternMatches(before);
 
   @override
   Future<void> addToWatchlist(String symbol) => _service.addToWatchlist(symbol);
 
   @override
-  Future<void> removeFromWatchlist(String symbol) => _service.removeFromWatchlist(symbol);
+  Future<void> removeFromWatchlist(String symbol) =>
+      _service.removeFromWatchlist(symbol);
 
   @override
   Future<List<String>> getWatchlist() => _service.getWatchlist();
@@ -275,13 +348,16 @@ class _DatabaseServiceWebAdapter implements DatabaseServiceInterface {
   Future<void> clearWatchlist() => _service.clearWatchlist();
 
   @override
-  Future<void> deleteOldStockData(DateTime before) => _service.deleteOldStockData(before);
+  Future<void> deleteOldStockData(DateTime before) =>
+      _service.deleteOldStockData(before);
 
   @override
-  Future<int> getStockDataCount(String symbol) => _service.getStockDataCount(symbol);
+  Future<int> getStockDataCount(String symbol) =>
+      _service.getStockDataCount(symbol);
 
   @override
-  Future<int> getPatternMatchCount({String? symbol}) => _service.getPatternMatchCount(symbol: symbol);
+  Future<int> getPatternMatchCount({String? symbol}) =>
+      _service.getPatternMatchCount(symbol: symbol);
 
   @override
   Future<void> close() => _service.close();

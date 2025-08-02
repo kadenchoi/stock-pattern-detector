@@ -26,7 +26,7 @@ class AlertManagerWeb {
 
   Future<bool> _hasNotificationPermission() async {
     if (!kIsWeb || !html.Notification.supported) return false;
-    
+
     final permission = html.window.localStorage[_permissionStorageKey];
     return permission == 'granted';
   }
@@ -55,7 +55,8 @@ class AlertManagerWeb {
 
     try {
       final title = 'Pattern Detected: ${pattern.symbol}';
-      final body = '${pattern.patternType.name} - ${pattern.direction.name.toUpperCase()}\n'
+      final body =
+          '${pattern.patternType.name} - ${pattern.direction.name.toUpperCase()}\n'
           'Confidence: ${(pattern.matchScore * 100).toStringAsFixed(1)}%';
 
       final notification = html.Notification(

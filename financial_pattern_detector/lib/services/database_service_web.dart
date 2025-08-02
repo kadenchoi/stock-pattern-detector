@@ -15,7 +15,7 @@ class DatabaseServiceWeb {
 
   Future<void> initialize() async {
     await Hive.initFlutter();
-    
+
     _stockDataBox = await Hive.openBox<String>(_stockDataBoxName);
     _patternMatchBox = await Hive.openBox<String>(_patternMatchBoxName);
     _watchlistBox = await Hive.openBox<String>(_watchlistBoxName);
@@ -44,7 +44,8 @@ class DatabaseServiceWeb {
 
   // Stock data operations
   Future<void> insertStockData(StockData stockData) async {
-    final key = '${stockData.symbol}_${stockData.timestamp.millisecondsSinceEpoch}';
+    final key =
+        '${stockData.symbol}_${stockData.timestamp.millisecondsSinceEpoch}';
     final jsonData = jsonEncode(stockData.toJson());
     await stockDataBox.put(key, jsonData);
   }
@@ -52,7 +53,8 @@ class DatabaseServiceWeb {
   Future<void> insertStockDataBatch(List<StockData> stockDataList) async {
     final Map<String, String> batch = {};
     for (final stockData in stockDataList) {
-      final key = '${stockData.symbol}_${stockData.timestamp.millisecondsSinceEpoch}';
+      final key =
+          '${stockData.symbol}_${stockData.timestamp.millisecondsSinceEpoch}';
       batch[key] = jsonEncode(stockData.toJson());
     }
     await stockDataBox.putAll(batch);
@@ -64,31 +66,33 @@ class DatabaseServiceWeb {
     DateTime? endDate,
     int? limit,
   }) async {
-    final allKeys = stockDataBox.keys.where((key) => key.toString().startsWith(symbol)).toList();
-    
+    final allKeys = stockDataBox.keys
+        .where((key) => key.toString().startsWith(symbol))
+        .toList();
+
     List<StockData> stockDataList = [];
-    
+
     for (final key in allKeys) {
       final jsonData = stockDataBox.get(key);
       if (jsonData != null) {
         final data = StockData.fromJson(jsonDecode(jsonData));
-        
+
         // Apply date filters
         if (startDate != null && data.timestamp.isBefore(startDate)) continue;
         if (endDate != null && data.timestamp.isAfter(endDate)) continue;
-        
+
         stockDataList.add(data);
       }
     }
-    
+
     // Sort by timestamp
     stockDataList.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    
+
     // Apply limit
     if (limit != null && stockDataList.length > limit) {
       stockDataList = stockDataList.sublist(stockDataList.length - limit);
     }
-    
+
     return stockDataList;
   }
 
@@ -112,30 +116,31 @@ class DatabaseServiceWeb {
     int? limit,
   }) async {
     List<PatternMatch> patternMatches = [];
-    
+
     for (final key in patternMatchBox.keys) {
       final jsonData = patternMatchBox.get(key);
       if (jsonData != null) {
         final pattern = PatternMatch.fromJson(jsonDecode(jsonData));
-        
+
         // Apply filters
         if (symbol != null && pattern.symbol != symbol) continue;
         if (patternType != null && pattern.patternType != patternType) continue;
-        if (startDate != null && pattern.detectedAt.isBefore(startDate)) continue;
+        if (startDate != null && pattern.detectedAt.isBefore(startDate))
+          continue;
         if (endDate != null && pattern.detectedAt.isAfter(endDate)) continue;
-        
+
         patternMatches.add(pattern);
       }
     }
-    
+
     // Sort by detection time (newest first)
     patternMatches.sort((a, b) => b.detectedAt.compareTo(a.detectedAt));
-    
+
     // Apply limit
     if (limit != null && patternMatches.length > limit) {
       patternMatches = patternMatches.sublist(0, limit);
     }
-    
+
     return patternMatches;
   }
 
@@ -153,7 +158,7 @@ class DatabaseServiceWeb {
 
   Future<void> deleteOldPatternMatches(DateTime before) async {
     final keysToDelete = <String>[];
-    
+
     for (final key in patternMatchBox.keys) {
       final jsonData = patternMatchBox.get(key);
       if (jsonData != null) {
@@ -163,13 +168,16 @@ class DatabaseServiceWeb {
         }
       }
     }
-    
+
     await patternMatchBox.deleteAll(keysToDelete);
   }
 
   // Watchlist operations
   Future<void> addToWatchlist(String symbol) async {
-    await watchlistBox.put(symbol, jsonEncode({'symbol': symbol, 'addedAt': DateTime.now().toIso8601String()}));
+    await watchlistBox.put(
+        symbol,
+        jsonEncode(
+            {'symbol': symbol, 'addedAt': DateTime.now().toIso8601String()}));
   }
 
   Future<void> removeFromWatchlist(String symbol) async {
@@ -191,7 +199,7 @@ class DatabaseServiceWeb {
   // Cleanup operations
   Future<void> deleteOldStockData(DateTime before) async {
     final keysToDelete = <String>[];
-    
+
     for (final key in stockDataBox.keys) {
       final jsonData = stockDataBox.get(key);
       if (jsonData != null) {
@@ -201,19 +209,21 @@ class DatabaseServiceWeb {
         }
       }
     }
-    
+
     await stockDataBox.deleteAll(keysToDelete);
   }
 
   Future<int> getStockDataCount(String symbol) async {
-    return stockDataBox.keys.where((key) => key.toString().startsWith(symbol)).length;
+    return stockDataBox.keys
+        .where((key) => key.toString().startsWith(symbol))
+        .length;
   }
 
   Future<int> getPatternMatchCount({String? symbol}) async {
     if (symbol == null) {
       return patternMatchBox.length;
     }
-    
+
     int count = 0;
     for (final key in patternMatchBox.keys) {
       final jsonData = patternMatchBox.get(key);

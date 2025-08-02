@@ -24,7 +24,8 @@ class AppManager {
 
   final YahooFinanceService _yahooService = YahooFinanceService();
   final PatternAnalyzer _patternAnalyzer = PatternAnalyzer();
-  final PlatformDatabaseService _databaseService = PlatformDatabaseService.instance;
+  final PlatformDatabaseService _databaseService =
+      PlatformDatabaseService.instance;
   late final dynamic _alertManager;
   final SettingsManager _settingsManager = SettingsManager();
 
