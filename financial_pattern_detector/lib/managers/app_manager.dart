@@ -1,13 +1,11 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/app_settings.dart';
 import '../models/pattern_detection.dart';
 import '../models/stock_data.dart';
 import '../services/yahoo_finance_service.dart';
 import '../services/pattern_analyzer.dart';
 import '../services/platform_database_service.dart';
-import '../services/alert_manager_web.dart';
-import '../managers/alert_manager.dart';
+import '../services/alert_manager_factory.dart';
 import '../managers/settings_manager.dart';
 
 class AppManager {
@@ -15,18 +13,14 @@ class AppManager {
   factory AppManager() => _instance;
   AppManager._internal() {
     // Initialize platform-specific alert manager
-    if (kIsWeb) {
-      _alertManager = AlertManagerWeb();
-    } else {
-      _alertManager = AlertManager();
-    }
+    _alertManager = AlertManagerFactory.create();
   }
 
   final YahooFinanceService _yahooService = YahooFinanceService();
   final PatternAnalyzer _patternAnalyzer = PatternAnalyzer();
   final PlatformDatabaseService _databaseService =
       PlatformDatabaseService.instance;
-  late final dynamic _alertManager;
+  late final AlertManagerInterface _alertManager;
   final SettingsManager _settingsManager = SettingsManager();
 
   Timer? _analysisTimer;
@@ -167,8 +161,8 @@ class AppManager {
         for (final pattern in newPatterns) {
           await _databaseService.insertPatternMatch(pattern);
           await _alertManager.sendPatternAlert(
-            pattern,
-            settings,
+            pattern: pattern,
+            settings: settings,
           );
         }
 
@@ -265,9 +259,9 @@ class AppManager {
       case DataPeriod.oneHour:
         return '5d';
       case DataPeriod.oneDay:
-        return '1mo';
+        return '6mo';
       case DataPeriod.fiveDays:
-        return '3mo';
+        return '6mo';
       case DataPeriod.oneWeek:
         return '6mo';
       case DataPeriod.oneMonth:
