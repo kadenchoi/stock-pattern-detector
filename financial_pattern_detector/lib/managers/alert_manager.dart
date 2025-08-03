@@ -17,14 +17,26 @@ class AlertManager {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    // Initialize macOS notifications
+    // Initialize macOS and iOS notifications
     const macOSSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    const initSettings = InitializationSettings(macOS: macOSSettings);
+    // iOS settings use the same DarwinInitializationSettings
+    const iOSSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+      requestCriticalPermission: false,
+      requestProvisionalPermission: false,
+    );
+
+    const initSettings = InitializationSettings(
+      macOS: macOSSettings,
+      iOS: iOSSettings,
+    );
 
     await _notifications.initialize(
       initSettings,
@@ -75,8 +87,7 @@ class AlertManager {
     );
 
     final title = '🚨 Pattern Detected: ${pattern.symbol}';
-    final body =
-        '${pattern.patternName} ${pattern.directionEmoji} '
+    final body = '${pattern.patternName} ${pattern.directionEmoji} '
         'Confidence: ${pattern.matchPercentage.toStringAsFixed(1)}%';
 
     await _notifications.show(
@@ -171,10 +182,9 @@ class AlertManager {
   Future<bool> requestPermissions() async {
     if (!_isInitialized) await initialize();
 
-    final macOSImplementation = _notifications
-        .resolvePlatformSpecificImplementation<
-          MacOSFlutterLocalNotificationsPlugin
-        >();
+    final macOSImplementation =
+        _notifications.resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin>();
 
     if (macOSImplementation != null) {
       final result = await macOSImplementation.requestPermissions(
