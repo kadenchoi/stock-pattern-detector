@@ -36,6 +36,17 @@ class PatternFilterService {
         return false;
       }
 
+      // Filter by minimum duration (pattern must be longer than X times the interval)
+      if (criteria.minDurationMultiplier > 0) {
+        final patternDuration = pattern.endTime.difference(pattern.startTime);
+        final minRequiredDuration =
+            Duration(days: criteria.minDurationMultiplier);
+
+        if (patternDuration.inDays < minRequiredDuration.inDays) {
+          return false;
+        }
+      }
+
       return true;
     }).toList();
 
@@ -111,6 +122,10 @@ class PatternFilterService {
     if (criteria.minConfidence > 0.0) {
       filters.add(
           '${(criteria.minConfidence * 100).toStringAsFixed(0)}%+ confidence');
+    }
+
+    if (criteria.minDurationMultiplier > 0) {
+      filters.add('${criteria.minDurationMultiplier}+ days duration');
     }
 
     final filterText = filters.join(', ');

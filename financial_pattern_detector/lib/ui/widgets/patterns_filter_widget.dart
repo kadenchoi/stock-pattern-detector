@@ -14,6 +14,8 @@ class PatternFilterCriteria {
   final DateTimeRange? timeRange;
   final SortOption sortOption;
   final double minConfidence;
+  final int
+      minDurationMultiplier; // Minimum duration as multiple of interval (e.g., 50 for 50 days)
 
   const PatternFilterCriteria({
     this.selectedSymbols = const {},
@@ -21,6 +23,7 @@ class PatternFilterCriteria {
     this.timeRange,
     this.sortOption = SortOption.newestFirst,
     this.minConfidence = 0.0,
+    this.minDurationMultiplier = 0, // 0 means no duration filter
   });
 
   PatternFilterCriteria copyWith({
@@ -29,6 +32,7 @@ class PatternFilterCriteria {
     DateTimeRange? timeRange,
     SortOption? sortOption,
     double? minConfidence,
+    int? minDurationMultiplier,
   }) {
     return PatternFilterCriteria(
       selectedSymbols: selectedSymbols ?? this.selectedSymbols,
@@ -36,6 +40,8 @@ class PatternFilterCriteria {
       timeRange: timeRange ?? this.timeRange,
       sortOption: sortOption ?? this.sortOption,
       minConfidence: minConfidence ?? this.minConfidence,
+      minDurationMultiplier:
+          minDurationMultiplier ?? this.minDurationMultiplier,
     );
   }
 
@@ -43,7 +49,8 @@ class PatternFilterCriteria {
       selectedSymbols.isNotEmpty ||
       selectedDirections.isNotEmpty ||
       timeRange != null ||
-      minConfidence > 0.0;
+      minConfidence > 0.0 ||
+      minDurationMultiplier > 0;
 }
 
 class PatternsFilterWidget extends StatefulWidget {

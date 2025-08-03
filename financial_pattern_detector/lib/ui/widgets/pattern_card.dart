@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../models/pattern_detection.dart';
 
 class PatternCard extends StatelessWidget {
@@ -11,23 +10,19 @@ class PatternCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 6),
+      elevation: 1,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              const SizedBox(height: 12),
-              _buildPatternInfo(),
-              const SizedBox(height: 12),
-              _buildDescription(),
-              const SizedBox(height: 12),
-              _buildFooter(),
+              _buildCompactHeader(),
+              const SizedBox(height: 6),
+              _buildCompactInfo(),
             ],
           ),
         ),
@@ -35,106 +30,125 @@ class PatternCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildCompactHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              pattern.symbol,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        // Symbol badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade100,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            pattern.symbol,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
             ),
-            Text(
-              pattern.patternName,
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
+          ),
         ),
-        _buildConfidenceBadge(),
+        const SizedBox(width: 6),
+
+        // Pattern type
+        Expanded(
+          child: Text(
+            pattern.patternName,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+
+        // Confidence badge
+        _buildCompactConfidenceBadge(),
       ],
     );
   }
 
-  Widget _buildConfidenceBadge() {
+  Widget _buildCompactInfo() {
+    return Row(
+      children: [
+        // Direction chip
+        _buildCompactDirectionChip(),
+        const SizedBox(width: 6),
+
+        // Time info
+        Expanded(
+          child: Text(
+            _formatCompactTime(pattern.detectedAt),
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+
+        // Price target if available
+        if (pattern.priceTarget != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Text(
+              '\$${pattern.priceTarget!.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.green,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCompactConfidenceBadge() {
     final percentage = pattern.matchPercentage;
     final color = _getConfidenceColor(percentage);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
       ),
       child: Text(
-        '${percentage.toStringAsFixed(1)}%',
+        '${percentage.toStringAsFixed(0)}%',
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 10,
         ),
       ),
     );
   }
 
-  Widget _buildPatternInfo() {
-    return Row(
-      children: [
-        _buildDirectionChip(),
-        const SizedBox(width: 12),
-        if (pattern.priceTarget != null) _buildPriceTarget(),
-      ],
-    );
-  }
-
-  Widget _buildDirectionChip() {
+  Widget _buildCompactDirectionChip() {
     final color = _getDirectionColor();
+    final icon = _getDirectionIcon();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(pattern.directionEmoji, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 4),
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 2),
           Text(
-            pattern.direction.name.toUpperCase(),
+            _getDirectionText(),
             style: TextStyle(
               color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPriceTarget() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.my_location, size: 14, color: Colors.blue),
-          const SizedBox(width: 4),
-          Text(
-            '\$${pattern.priceTarget!.toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: Colors.blue,
+              fontSize: 9,
               fontWeight: FontWeight.w500,
-              fontSize: 12,
             ),
           ),
         ],
@@ -142,59 +156,41 @@ class PatternCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDescription() {
-    return Text(
-      pattern.description,
-      style: const TextStyle(fontSize: 14, color: Colors.black87),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildFooter() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildTimeInfo(),
-        const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-      ],
-    );
-  }
-
-  Widget _buildTimeInfo() {
+  String _formatCompactTime(DateTime dateTime) {
     final now = DateTime.now();
-    final difference = now.difference(pattern.detectedAt);
+    final difference = now.difference(dateTime);
 
-    String timeAgo;
-    if (difference.inDays > 0) {
-      timeAgo = '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      timeAgo = '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      timeAgo = '${difference.inMinutes}m ago';
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
     } else {
-      timeAgo = 'Just now';
+      return '${(difference.inDays / 7).floor()}w ago';
     }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Detected $timeAgo',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        Text(
-          _formatDateRange(),
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-      ],
-    );
   }
 
-  String _formatDateRange() {
-    final startDate = '${pattern.startTime.month}/${pattern.startTime.day}';
-    final endDate = '${pattern.endTime.month}/${pattern.endTime.day}';
-    return 'Pattern: $startDate - $endDate';
+  String _getDirectionText() {
+    switch (pattern.direction) {
+      case PatternDirection.bullish:
+        return 'Bull';
+      case PatternDirection.bearish:
+        return 'Bear';
+      case PatternDirection.breakout:
+        return 'Break';
+    }
+  }
+
+  IconData _getDirectionIcon() {
+    switch (pattern.direction) {
+      case PatternDirection.bullish:
+        return Icons.trending_up;
+      case PatternDirection.bearish:
+        return Icons.trending_down;
+      case PatternDirection.breakout:
+        return Icons.open_in_full;
+    }
   }
 
   Color _getDirectionColor() {

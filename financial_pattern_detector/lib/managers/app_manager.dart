@@ -259,11 +259,11 @@ class AppManager {
       case DataPeriod.oneHour:
         return '5d';
       case DataPeriod.oneDay:
-        return '6mo';
+        return '1y';
       case DataPeriod.fiveDays:
-        return '6mo';
+        return '1y';
       case DataPeriod.oneWeek:
-        return '6mo';
+        return '1y';
       case DataPeriod.oneMonth:
         return '1y';
       case DataPeriod.threeMonths:
