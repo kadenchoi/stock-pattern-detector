@@ -2,11 +2,14 @@ import 'package:financial_pattern_detector/managers/app_manager.dart';
 import 'package:financial_pattern_detector/models/pattern_detection.dart';
 import 'package:flutter/material.dart';
 import '../../models/stock_data.dart';
+import '../../utils/pattern_filter_service.dart';
 import 'settings_screen.dart';
 import 'pattern_details_screen.dart';
 import '../widgets/pattern_card.dart';
 import '../widgets/watchlist_widget.dart';
 import '../widgets/status_indicator.dart';
+import '../widgets/patterns_filter_widget.dart';
+import '../widgets/quick_filters_widget.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -20,8 +23,12 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   late TabController _tabController;
 
   List<PatternMatch> _patterns = [];
+  List<PatternMatch> _filteredPatterns = [];
   Map<String, StockDataSeries?> _stockData = {};
   String _currentStatus = 'Initializing...';
+  PatternFilterCriteria _filterCriteria = const PatternFilterCriteria();
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -40,6 +47,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     _appManager.patternStream.listen((patterns) {
       setState(() {
         _patterns = patterns;
+        _applyFilters();
       });
     });
 
@@ -131,19 +139,122 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () => _appManager.runManualAnalysis(),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _patterns.length,
-        itemBuilder: (context, index) {
-          final pattern = _patterns[index];
-          return PatternCard(
-            pattern: pattern,
-            onTap: () => _openPatternDetails(pattern),
-          );
-        },
-      ),
+    return Column(
+      children: [
+        // Search bar
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search patterns, symbols, or descriptions...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearchChanged('');
+                      },
+                    )
+                  : null,
+              border: const OutlineInputBorder(),
+            ),
+            onChanged: _onSearchChanged,
+          ),
+        ),
+
+        // Filter widget
+        PatternsFilterWidget(
+          criteria: _filterCriteria,
+          allPatterns: _patterns,
+          onFiltersChanged: _onFiltersChanged,
+        ),
+
+        // Quick filters
+        QuickFiltersWidget(
+          currentCriteria: _filterCriteria,
+          onFilterSelected: _onFiltersChanged,
+        ),
+
+        // Results summary
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  PatternFilterService.getFilterSummary(
+                    _filterCriteria,
+                    _patterns.length,
+                    _filteredPatterns.length,
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              if (_filteredPatterns.isNotEmpty)
+                Text(
+                  'Avg: ${(_filteredPatterns.map((p) => p.matchScore).reduce((a, b) => a + b) / _filteredPatterns.length * 100).toStringAsFixed(1)}%',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+            ],
+          ),
+        ),
+
+        // Patterns list
+        Expanded(
+          child: _filteredPatterns.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.filter_list_off,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No patterns match your filters',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _filterCriteria = const PatternFilterCriteria();
+                            _searchController.clear();
+                            _searchQuery = '';
+                            _applyFilters();
+                          });
+                        },
+                        child: const Text('Clear All Filters'),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: () => _appManager.runManualAnalysis(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: _filteredPatterns.length,
+                    itemBuilder: (context, index) {
+                      final pattern = _filteredPatterns[index];
+                      return PatternCard(
+                        pattern: pattern,
+                        onTap: () => _openPatternDetails(pattern),
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -287,6 +398,36 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _applyFilters() {
+    var filtered =
+        PatternFilterService.filterAndSort(_patterns, _filterCriteria);
+
+    // Apply search query if present
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered
+          .where((pattern) =>
+              PatternFilterService.matchesSearchQuery(pattern, _searchQuery))
+          .toList();
+    }
+
+    _filteredPatterns = filtered;
+  }
+
+  void _onFiltersChanged(PatternFilterCriteria newCriteria) {
+    setState(() {
+      _filterCriteria = newCriteria;
+      _applyFilters();
+    });
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+      _applyFilters();
+    });
   }
 }
