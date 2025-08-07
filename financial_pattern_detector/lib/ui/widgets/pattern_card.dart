@@ -67,40 +67,48 @@ class PatternCard extends StatelessWidget {
   }
 
   Widget _buildCompactInfo() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Direction chip
-        _buildCompactDirectionChip(),
-        const SizedBox(width: 6),
+        Row(
+          children: [
+            // Direction chip
+            _buildCompactDirectionChip(),
+            const SizedBox(width: 6),
 
-        // Time info
-        Expanded(
-          child: Text(
-            _formatCompactTime(pattern.detectedAt),
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-            ),
-          ),
-        ),
-
-        // Price target if available
-        if (pattern.priceTarget != null)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: Text(
-              '\$${pattern.priceTarget!.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.green,
-                fontWeight: FontWeight.w500,
+            // Detection time info
+            Expanded(
+              child: Text(
+                'Detected ${_formatCompactTime(pattern.detectedAt)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[600],
+                ),
               ),
             ),
-          ),
+
+            // Price target if available
+            if (pattern.priceTarget != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  '\$${pattern.priceTarget!.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.green,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        // Duration and end time info
+        _buildDurationInfo(),
       ],
     );
   }
@@ -112,9 +120,9 @@ class PatternCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
       ),
       child: Text(
         '${percentage.toStringAsFixed(0)}%',
@@ -134,9 +142,9 @@ class PatternCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -208,5 +216,52 @@ class PatternCard extends StatelessWidget {
     if (percentage >= 85) return Colors.green;
     if (percentage >= 70) return Colors.orange;
     return Colors.red;
+  }
+
+  Widget _buildDurationInfo() {
+    final duration = pattern.endTime.difference(pattern.startTime);
+    final durationText = _formatDuration(duration);
+    final endTimeText = _formatCompactTime(pattern.endTime);
+
+    return Row(
+      children: [
+        // Duration info
+        Icon(Icons.schedule, size: 10, color: Colors.grey[500]),
+        const SizedBox(width: 2),
+        Text(
+          'Duration: $durationText',
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(width: 8),
+
+        // Pattern end time
+        Icon(Icons.flag, size: 10, color: Colors.grey[500]),
+        const SizedBox(width: 2),
+        Text(
+          'Ended $endTimeText',
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.inDays > 0) {
+      return '${duration.inDays}d';
+    } else if (duration.inHours > 0) {
+      return '${duration.inHours}h';
+    } else if (duration.inMinutes > 0) {
+      return '${duration.inMinutes}m';
+    } else {
+      return '${duration.inSeconds}s';
+    }
   }
 }

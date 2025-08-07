@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'lib/models/app_settings.dart';
 import 'lib/services/yahoo_finance_service.dart';
 import 'lib/services/pattern_analyzer.dart';

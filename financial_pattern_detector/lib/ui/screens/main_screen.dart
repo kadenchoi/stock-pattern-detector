@@ -220,7 +220,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               color: Theme.of(context).colorScheme.surface,
               border: Border(
                 bottom: BorderSide(
-                  color: Theme.of(context).dividerColor.withOpacity(0.3),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
                   width: 0.5,
                 ),
               ),
@@ -1020,7 +1020,7 @@ class _DurationFilterDialogState extends State<_DurationFilterDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('${_minDuration} days minimum'),
+          Text('$_minDuration days minimum'),
           const SizedBox(height: 16),
           Slider(
             value: _minDuration.toDouble(),
@@ -1032,15 +1032,15 @@ class _DurationFilterDialogState extends State<_DurationFilterDialog> {
             min: 0,
             max: 200,
             divisions: 20,
-            label: '${_minDuration} days',
+            label: '$_minDuration days',
           ),
           const SizedBox(height: 8),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('0 days',
+              Text('0 days',
                   style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const Text('200 days',
+              Text('200 days',
                   style: TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
@@ -1251,7 +1251,7 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
               });
             },
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -1338,13 +1338,11 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
           divisions: 20,
           label: '${(_criteria.minConfidence * 100).round()}%',
         ),
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('0%',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
-            const Text('100%',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('0%', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('100%', style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ],
@@ -1414,12 +1412,11 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
               ? '${_criteria.minDurationMultiplier} days'
               : 'No filter',
         ),
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('0 days',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
-            const Text('200 days',
+            Text('0 days', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('200 days',
                 style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),

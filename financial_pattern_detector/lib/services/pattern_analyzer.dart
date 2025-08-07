@@ -3,7 +3,7 @@ import '../models/stock_data.dart';
 import '../models/pattern_detection.dart';
 
 class PatternAnalyzer {
-  static const double _defaultMinConfidence = 0.6;
+  static const double _defaultMinConfidence = 0.75;
 
   /// Analyzes stock data series for all supported patterns
   Future<List<PatternMatch>> analyzePatterns(
@@ -26,10 +26,13 @@ class PatternAnalyzer {
     // Remove overlapping patterns of the same type
     final mergedPatterns = _mergeOverlappingPatterns(patterns);
 
-    // Sort by confidence score descending
-    mergedPatterns.sort((a, b) => b.matchScore.compareTo(a.matchScore));
+    // Filter out low confidence duplicates
+    final highQualityPatterns = _filterLowConfidenceDuplicates(mergedPatterns);
 
-    return mergedPatterns;
+    // Sort by confidence score descending
+    highQualityPatterns.sort((a, b) => b.matchScore.compareTo(a.matchScore));
+
+    return highQualityPatterns;
   }
 
   Future<List<PatternMatch>> _detectHeadAndShoulders(
@@ -42,8 +45,8 @@ class PatternAnalyzer {
     // Need at least 20 data points for head and shoulders
     if (data.length < 20) return patterns;
 
-    // Use larger steps to reduce overlapping detections
-    for (int i = 5; i < data.length - 10; i += 2) {
+    // Use adaptive step sizes to reduce overlapping detections
+    for (int i = 5; i < data.length - 10; i += _adaptiveStep(data, i)) {
       final leftShoulder = _findLocalMaximum(data, i - 5, i);
       final head = _findLocalMaximum(data, i, i + 5);
       final rightShoulder = _findLocalMaximum(
@@ -97,8 +100,8 @@ class PatternAnalyzer {
 
     if (data.length < 30) return patterns;
 
-    // Use larger steps to reduce overlapping detections
-    for (int i = 10; i < data.length - 15; i += 3) {
+    // Use adaptive step sizes to reduce overlapping detections
+    for (int i = 10; i < data.length - 15; i += _adaptiveStep(data, i)) {
       final cupStart = i - 10;
       final cupBottom = _findLocalMinimum(data, i - 5, i + 5);
       final cupEnd = i + 10;
@@ -157,8 +160,8 @@ class PatternAnalyzer {
 
     if (data.length < 20) return patterns;
 
-    // Detect double tops (bearish) - use larger steps
-    for (int i = 5; i < data.length - 10; i += 2) {
+    // Detect double tops (bearish) - use adaptive steps
+    for (int i = 5; i < data.length - 10; i += _adaptiveStep(data, i)) {
       final firstPeak = _findLocalMaximum(data, i - 5, i);
       final valley = _findLocalMinimum(data, i, i + 5);
       final secondPeak = _findLocalMaximum(
@@ -193,8 +196,8 @@ class PatternAnalyzer {
       }
     }
 
-    // Detect double bottoms (bullish) - use larger steps
-    for (int i = 5; i < data.length - 10; i += 2) {
+    // Detect double bottoms (bullish) - use adaptive steps
+    for (int i = 5; i < data.length - 10; i += _adaptiveStep(data, i)) {
       final firstTrough = _findLocalMinimum(data, i - 5, i);
       final peak = _findLocalMaximum(data, i, i + 5);
       final secondTrough = _findLocalMinimum(
@@ -241,8 +244,8 @@ class PatternAnalyzer {
 
     if (data.length < 15) return patterns;
 
-    // Use larger steps to reduce overlapping detections
-    for (int i = 7; i < data.length - 7; i += 3) {
+    // Use adaptive step sizes to reduce overlapping detections
+    for (int i = 7; i < data.length - 7; i += _adaptiveStep(data, i)) {
       final startIdx = i - 7;
       final endIdx = i + 7;
 
@@ -296,8 +299,8 @@ class PatternAnalyzer {
 
     if (data.length < 10) return patterns;
 
-    // Use larger steps to reduce overlapping detections
-    for (int i = 5; i < data.length - 5; i += 2) {
+    // Use adaptive step sizes to reduce overlapping detections
+    for (int i = 5; i < data.length - 5; i += _adaptiveStep(data, i)) {
       final confidence = _calculateFlagConfidence(data, i - 5, i + 5);
 
       if (confidence >= minConfidence) {
@@ -354,13 +357,18 @@ class PatternAnalyzer {
       return 0.0;
     }
 
-    // Shoulders should be roughly similar heights
     final shoulderDiff = (leftShoulder.high - rightShoulder.high).abs();
-    final headHeight = head.high - max(leftShoulder.high, rightShoulder.high);
+    final avgShoulderHeight = (leftShoulder.high + rightShoulder.high) / 2;
+    final headHeight = head.high - avgShoulderHeight;
 
-    final symmetry = 1.0 - (shoulderDiff / headHeight).clamp(0.0, 1.0);
+    // Head must be distinct enough - at least 5% higher than average shoulder
+    if (headHeight < avgShoulderHeight * 0.05) return 0.0;
 
-    return (symmetry * 0.8 + 0.2).clamp(0.0, 1.0);
+    final symmetryScore =
+        1.0 - (shoulderDiff / avgShoulderHeight).clamp(0.0, 1.0);
+    final prominenceScore = (headHeight / avgShoulderHeight).clamp(0.0, 1.0);
+
+    return (symmetryScore * 0.5 + prominenceScore * 0.5).clamp(0.0, 1.0);
   }
 
   double _calculateCupAndHandleConfidence(
@@ -482,7 +490,13 @@ class PatternAnalyzer {
 
     // Lines should be converging
     final convergence = (upperSlope - lowerSlope).abs();
-    return (1.0 - convergence.clamp(0.0, 1.0)).clamp(0.6, 0.9);
+    final convergenceScore = (1.0 - convergence.clamp(0.0, 1.0));
+
+    // Additional validation: slopes should have reasonable magnitude
+    final slopeValidation =
+        (upperSlope.abs() > 0.001 && lowerSlope.abs() > 0.001) ? 1.0 : 0.5;
+
+    return (convergenceScore * slopeValidation).clamp(0.0, 0.95);
   }
 
   double _calculateFlagConfidence(List<StockData> data, int start, int end) {
@@ -492,8 +506,8 @@ class PatternAnalyzer {
     final preTrendStart = max(0, start - 10);
     final preTrendMove = data[start].close - data[preTrendStart].close;
 
-    if (preTrendMove.abs() < data[start].close * 0.05)
-      return 0.0; // Need significant prior move
+    // Need significant prior move (at least 3% price movement)
+    if (preTrendMove.abs() < data[start].close * 0.03) return 0.0;
 
     // Flag should be smaller consolidation
     final flagRange = data.sublist(start, end + 1);
@@ -503,7 +517,13 @@ class PatternAnalyzer {
 
     final consolidationRatio = (flagSize / preTrendMove.abs()).clamp(0.0, 1.0);
 
-    return (1.0 - consolidationRatio).clamp(0.6, 0.85);
+    // Flag consolidation should be small relative to the prior move
+    final consolidationScore = (1.0 - consolidationRatio);
+
+    // Additional validation: flag duration should be reasonable
+    final durationScore = (end - start) >= 3 ? 1.0 : 0.7;
+
+    return (consolidationScore * durationScore).clamp(0.0, 0.9);
   }
 
   String _generatePatternId() {
@@ -617,5 +637,35 @@ class PatternAnalyzer {
           '${basePattern.patternType.name} pattern detected (merged from overlapping detections)',
       metadata: basePattern.metadata,
     );
+  }
+
+  /// Filters out low confidence duplicates and overlapping patterns
+  List<PatternMatch> _filterLowConfidenceDuplicates(
+    List<PatternMatch> patterns, {
+    double threshold = 0.75,
+  }) {
+    final filtered = <PatternMatch>[];
+
+    patterns.sort((a, b) => b.matchScore.compareTo(a.matchScore));
+    for (final p in patterns) {
+      if (filtered.any((f) =>
+          f.patternType == p.patternType &&
+          _patternsOverlap(f, p) &&
+          f.matchScore >= p.matchScore)) {
+        continue;
+      }
+      if (p.matchScore >= threshold) filtered.add(p);
+    }
+    return filtered;
+  }
+
+  /// Calculate adaptive step size based on price volatility
+  int _adaptiveStep(List<StockData> data, int index) {
+    if (index >= data.length) return 3;
+
+    final volatility = (data[index].high - data[index].low) / data[index].close;
+    if (volatility > 0.05) return 2; // High volatility = tighter check
+    if (volatility > 0.02) return 3;
+    return 4; // Low volatility = broader steps
   }
 }
