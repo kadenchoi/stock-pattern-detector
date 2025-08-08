@@ -80,3 +80,6 @@ financial_pattern_detector/macos/Runner.xcodeproj/xcuserdata/
 
 # Test files that might contain sensitive data
 test_functionality.dart
+
+#DATABASE
+.database
