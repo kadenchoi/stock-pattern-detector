@@ -7,6 +7,7 @@ import 'settings_screen.dart';
 import 'pattern_details_screen.dart';
 import '../widgets/pattern_card.dart';
 import '../widgets/watchlist_widget.dart';
+import '../widgets/candlestick_chart.dart';
 import '../widgets/status_indicator.dart';
 import '../widgets/patterns_filter_widget.dart';
 
@@ -24,6 +25,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   List<PatternMatch> _patterns = [];
   List<PatternMatch> _filteredPatterns = [];
   Map<String, StockDataSeries?> _stockData = {};
+  String? _selectedChartSymbol;
   String _currentStatus = 'Initializing...';
   PatternFilterCriteria _filterCriteria = const PatternFilterCriteria();
   String _searchQuery = '';
@@ -53,6 +55,14 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     _appManager.stockDataStream.listen((stockData) {
       setState(() {
         _stockData = stockData;
+        // Initialize or repair selected symbol when data changes
+        if (_stockData.isEmpty) {
+          _selectedChartSymbol = null;
+        } else if (_selectedChartSymbol == null ||
+            !_stockData.containsKey(_selectedChartSymbol)) {
+          final syms = _stockData.keys.toList()..sort();
+          _selectedChartSymbol = syms.first;
+        }
       });
     });
 
@@ -324,23 +334,48 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildChartsTab() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.show_chart, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Charts Coming Soon',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
+    if (_stockData.isEmpty) {
+      return const Center(
+        child: Text('Add symbols to watchlist to see charts'),
+      );
+    }
+    final symbols = _stockData.keys.toList()..sort();
+    final selected = _selectedChartSymbol ?? symbols.first;
+    final series = _stockData[selected];
+    if (series == null) {
+      return const Center(child: Text('No data available'));
+    }
+    final patternsForSymbol =
+        _patterns.where((p) => p.symbol == selected).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              const Text('Symbol:'),
+              const SizedBox(width: 8),
+              DropdownButton<String>(
+                value: selected,
+                items: symbols
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null && _stockData.containsKey(val)) {
+                    setState(() {
+                      _selectedChartSymbol = val;
+                    });
+                  }
+                },
+              ),
+            ],
           ),
-          SizedBox(height: 8),
-          Text(
-            'Interactive candlestick charts with pattern overlays',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: CandlestickChart(series: series, patterns: patternsForSymbol),
+        ),
+      ],
     );
   }
 

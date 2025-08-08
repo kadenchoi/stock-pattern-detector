@@ -8,6 +8,7 @@ import '../services/platform_database_service.dart';
 import '../services/alert_manager_factory.dart';
 import '../managers/settings_manager.dart';
 import '../services/pattern_cache_service.dart';
+import '../services/pattern_prediction_service.dart';
 
 class AppManager {
   static final AppManager _instance = AppManager._internal();
@@ -161,14 +162,24 @@ class AppManager {
 
         // Store new patterns and send alerts
         for (final pattern in newPatterns) {
-          await _databaseService.insertPatternMatch(pattern);
+          final enriched = PatternPredictionService.instance.enrich(
+            pattern,
+            stockSeries.data,
+          );
+          await _databaseService.insertPatternMatch(enriched);
           await _alertManager.sendPatternAlert(
-            pattern: pattern,
+            pattern: enriched,
             settings: settings,
           );
         }
 
-        allPatterns.addAll(patterns);
+        // Also keep enriched versions in stream
+        allPatterns.addAll(
+          patterns
+              .map((p) =>
+                  PatternPredictionService.instance.enrich(p, stockSeries.data))
+              .toList(),
+        );
       }
 
       _patternStreamController.add(allPatterns);
@@ -280,6 +291,7 @@ class AppManager {
     print('AppManager: $status');
   }
 
+  // ignore: unused_element
   Future<void> _testCoreFunctionality() async {
     print('Testing core functionality...');
 

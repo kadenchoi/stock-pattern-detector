@@ -29,10 +29,88 @@ class PatternAnalyzer {
     // Filter out low confidence duplicates
     final highQualityPatterns = _filterLowConfidenceDuplicates(mergedPatterns);
 
-    // Sort by confidence score descending
-    highQualityPatterns.sort((a, b) => b.matchScore.compareTo(a.matchScore));
+    // Apply volatility and volume refinement to reduce false positives
+    final refined =
+        _refineByVolatilityAndVolume(stockSeries, highQualityPatterns);
 
-    return highQualityPatterns;
+    // Sort by confidence score descending
+    refined.sort((a, b) => b.matchScore.compareTo(a.matchScore));
+
+    return refined;
+  }
+
+  List<PatternMatch> _refineByVolatilityAndVolume(
+      StockDataSeries stockSeries, List<PatternMatch> patterns) {
+    if (stockSeries.data.isEmpty || patterns.isEmpty) return patterns;
+    final data = stockSeries.data;
+
+    double avgTrueRange(int start, int end) {
+      start = start.clamp(0, data.length - 1);
+      end = end.clamp(0, data.length - 1);
+      if (end <= start) return 0;
+      double sum = 0;
+      for (int i = start + 1; i <= end; i++) {
+        final high = data[i].high;
+        final low = data[i].low;
+        final prevClose = data[i - 1].close;
+        final tr = [
+          high - low,
+          (high - prevClose).abs(),
+          (low - prevClose).abs(),
+        ].reduce((a, b) => a > b ? a : b);
+        sum += tr;
+      }
+      return sum / (end - start);
+    }
+
+    double medianVolume(int start, int end) {
+      start = start.clamp(0, data.length - 1);
+      end = end.clamp(0, data.length - 1);
+      if (end < start) return 0;
+      final vols = [
+        for (int i = start; i <= end; i++) data[i].volume.toDouble()
+      ]..sort();
+      final mid = vols.length ~/ 2;
+      if (vols.isEmpty) return 0;
+      return vols.length.isOdd ? vols[mid] : (vols[mid - 1] + vols[mid]) / 2.0;
+    }
+
+    int indexOfTime(DateTime t) {
+      // Binary search for closest index
+      int lo = 0, hi = data.length - 1, best = 0;
+      while (lo <= hi) {
+        final mid = (lo + hi) >> 1;
+        final cmp = data[mid].timestamp.compareTo(t);
+        if (cmp == 0) return mid;
+        if (cmp < 0) {
+          best = mid;
+          lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
+      }
+      return best;
+    }
+
+    final refined = <PatternMatch>[];
+    for (final p in patterns) {
+      final sIdx = indexOfTime(p.startTime);
+      final eIdx = indexOfTime(p.endTime);
+      final windowAtr = avgTrueRange(sIdx, eIdx);
+      final move = (data[eIdx].close - data[sIdx].close).abs();
+      final volMed = medianVolume(sIdx, eIdx);
+      final endVol = data[eIdx].volume.toDouble();
+
+      // Basic gates: move should exceed 1.2x ATR over window, and end volume not dry-up
+      final passVolatility = windowAtr == 0 ? true : (move / windowAtr) >= 1.2;
+      final passVolume = volMed == 0 ? true : (endVol >= 0.8 * volMed);
+
+      if (passVolatility && passVolume) {
+        refined.add(p);
+      }
+    }
+
+    return refined;
   }
 
   Future<List<PatternMatch>> _detectHeadAndShoulders(
