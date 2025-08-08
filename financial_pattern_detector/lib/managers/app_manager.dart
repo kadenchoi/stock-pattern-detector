@@ -60,9 +60,6 @@ class AppManager {
       _updateStatus('Application initialized successfully');
       _isInitialized = true;
 
-      // Test core functionality
-      await _testCoreFunctionality();
-
       // Start the analysis cycle
       await startAnalysis();
     } catch (e) {
