@@ -43,6 +43,9 @@ class AppManager {
       _stockDataStreamController.stream;
   Stream<String> get statusStream => _statusStreamController.stream;
 
+  // Cache last emitted stock data for immediate UI updates
+  Map<String, StockDataSeries?> _lastStockData = const {};
+
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -129,7 +132,8 @@ class AppManager {
         range: _getRangeForPeriod(settings.dataPeriod),
       );
 
-      _stockDataStreamController.add(stockDataMap);
+      _lastStockData = stockDataMap;
+      _stockDataStreamController.add(_lastStockData);
 
       // Store data in database and analyze patterns
       final allPatterns = <PatternMatch>[];
@@ -329,6 +333,18 @@ class AppManager {
 
   Future<void> removeSymbolFromWatchlist(String symbol) async {
     await _settingsManager.removeFromWatchlist(symbol);
+    // Optimistically update UI by removing the symbol from the last data map
+    final upper = symbol.toUpperCase();
+    if (_lastStockData.isNotEmpty && _lastStockData.containsKey(upper)) {
+      final updated = Map<String, StockDataSeries?>.from(_lastStockData);
+      updated.remove(upper);
+      _lastStockData = updated;
+      _stockDataStreamController.add(_lastStockData);
+    }
+    // Restart analysis to reflect removal immediately
+    if (_analysisTimer?.isActive == true) {
+      await startAnalysis();
+    }
   }
 
   Future<void> updateSettings(AppSettings settings) async {

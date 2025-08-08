@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings.dart';
+import '../services/supabase_auth_service.dart';
+import '../services/supabase_watchlist_service.dart';
 
 class SettingsManager {
   static final SettingsManager _instance = SettingsManager._internal();
@@ -58,6 +60,12 @@ class SettingsManager {
     if (!updatedWatchlist.contains(upperSymbol)) {
       updatedWatchlist.add(upperSymbol);
       await updateWatchlist(updatedWatchlist);
+      // Push to Supabase if signed in (best effort)
+      if (SupabaseAuthService.instance.currentUser != null) {
+        try {
+          await SupabaseWatchlistService.instance.addSymbol(upperSymbol);
+        } catch (_) {}
+      }
     }
   }
 
@@ -67,6 +75,11 @@ class SettingsManager {
 
     updatedWatchlist.remove(symbol.toUpperCase());
     await updateWatchlist(updatedWatchlist);
+    if (SupabaseAuthService.instance.currentUser != null) {
+      try {
+        await SupabaseWatchlistService.instance.removeSymbol(symbol);
+      } catch (_) {}
+    }
   }
 
   Future<void> updateTrackingInterval(DataPeriod interval) async {

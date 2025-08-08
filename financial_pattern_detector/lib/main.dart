@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/platform_database_service.dart';
-import 'ui/screens/main_screen.dart';
+import 'services/supabase_auth_service.dart';
+import 'ui/screens/auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,9 @@ void main() async {
 
   // Initialize platform-specific database service
   await PlatformDatabaseService.instance.initialize();
+
+  // Initialize Supabase auth
+  await SupabaseAuthService.instance.initialize();
 
   runApp(const FinancialPatternDetectorApp());
 }
@@ -67,7 +71,7 @@ class FinancialPatternDetectorApp extends StatelessWidget {
         ).data,
       ),
       themeMode: ThemeMode.system,
-      home: const MainScreen(),
+      home: const AuthGate(),
     );
   }
 }

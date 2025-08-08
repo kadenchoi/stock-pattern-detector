@@ -3,24 +3,18 @@ import '../models/stock_data.dart';
 import '../models/pattern_detection.dart';
 import 'database_service.dart';
 import 'database_service_web.dart';
+import 'supabase_watchlist_service.dart';
+import 'supabase_auth_service.dart';
 
+// Contract for local database-like operations used by the app
 abstract class DatabaseServiceInterface {
   Future<void> initialize();
   Future<void> insertStockData(List<StockData> stockDataList);
   Future<void> insertStockDataBatch(List<StockData> stockDataList);
-  Future<List<StockData>> getStockData(
-      {required String symbol,
-      DateTime? startDate,
-      DateTime? endDate,
-      int? limit});
+  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit});
   Future<StockData?> getLatestStockData(String symbol);
   Future<void> insertPatternMatch(PatternMatch patternMatch);
-  Future<List<PatternMatch>> getPatternMatches(
-      {String? symbol,
-      DateTime? startDate,
-      DateTime? endDate,
-      double? minScore,
-      int? limit});
+  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit});
   Future<PatternMatch?> getPatternMatch(String id);
   Future<void> deletePatternMatch(String id);
   Future<void> deleteOldPatternMatches(DateTime before);
@@ -37,103 +31,114 @@ abstract class DatabaseServiceInterface {
   Future<void> cleanupOldData({Duration? maxAge, int? maxRecords});
 }
 
+// Platform-aware facade that wraps the appropriate adapter (SQLite/Hive)
 class PlatformDatabaseService implements DatabaseServiceInterface {
   static PlatformDatabaseService? _instance;
-  late DatabaseServiceInterface _service;
+  static PlatformDatabaseService get instance => _instance ??= PlatformDatabaseService._internal();
 
-  PlatformDatabaseService._() {
-    if (kIsWeb) {
-      _service = _DatabaseServiceWebAdapter();
-    } else {
-      _service = _DatabaseServiceAdapter();
-    }
-  }
+  final DatabaseServiceInterface _service;
 
-  static PlatformDatabaseService get instance {
-    _instance ??= PlatformDatabaseService._();
-    return _instance!;
-  }
+  PlatformDatabaseService._internal()
+      : _service = kIsWeb ? _DatabaseServiceWebAdapter() : _DatabaseServiceAdapter();
 
   @override
   Future<void> initialize() => _service.initialize();
 
   @override
-  Future<void> insertStockData(List<StockData> stockDataList) =>
-      _service.insertStockData(stockDataList);
+  Future<void> insertStockData(List<StockData> stockDataList) => _service.insertStockData(stockDataList);
 
   @override
-  Future<void> insertStockDataBatch(List<StockData> stockDataList) =>
-      _service.insertStockDataBatch(stockDataList);
+  Future<void> insertStockDataBatch(List<StockData> stockDataList) => _service.insertStockDataBatch(stockDataList);
 
   @override
-  Future<List<StockData>> getStockData(
-          {required String symbol,
-          DateTime? startDate,
-          DateTime? endDate,
-          int? limit}) =>
-      _service.getStockData(
-          symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
+  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit}) =>
+      _service.getStockData(symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
 
   @override
-  Future<StockData?> getLatestStockData(String symbol) =>
-      _service.getLatestStockData(symbol);
+  Future<StockData?> getLatestStockData(String symbol) => _service.getLatestStockData(symbol);
 
   @override
-  Future<void> insertPatternMatch(PatternMatch patternMatch) =>
-      _service.insertPatternMatch(patternMatch);
+  Future<void> insertPatternMatch(PatternMatch patternMatch) => _service.insertPatternMatch(patternMatch);
 
   @override
-  Future<List<PatternMatch>> getPatternMatches(
-          {String? symbol,
-          DateTime? startDate,
-          DateTime? endDate,
-          double? minScore,
-          int? limit}) =>
-      _service.getPatternMatches(
-          symbol: symbol,
-          startDate: startDate,
-          endDate: endDate,
-          minScore: minScore,
-          limit: limit);
+  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit}) =>
+      _service.getPatternMatches(symbol: symbol, startDate: startDate, endDate: endDate, minScore: minScore, limit: limit);
 
   @override
-  Future<PatternMatch?> getPatternMatch(String id) =>
-      _service.getPatternMatch(id);
+  Future<PatternMatch?> getPatternMatch(String id) => _service.getPatternMatch(id);
 
   @override
   Future<void> deletePatternMatch(String id) => _service.deletePatternMatch(id);
 
   @override
-  Future<void> deleteOldPatternMatches(DateTime before) =>
-      _service.deleteOldPatternMatches(before);
+  Future<void> deleteOldPatternMatches(DateTime before) => _service.deleteOldPatternMatches(before);
 
   @override
-  Future<void> addToWatchlist(String symbol) => _service.addToWatchlist(symbol);
+  Future<void> addToWatchlist(String symbol) async {
+    await _service.addToWatchlist(symbol);
+    // Attempt Supabase sync if signed in
+    if (SupabaseAuthService.instance.currentUser != null) {
+      try {
+        await SupabaseWatchlistService.instance.addSymbol(symbol);
+      } catch (_) {}
+    }
+  }
 
   @override
-  Future<void> removeFromWatchlist(String symbol) =>
-      _service.removeFromWatchlist(symbol);
+  Future<void> removeFromWatchlist(String symbol) async {
+    await _service.removeFromWatchlist(symbol);
+    if (SupabaseAuthService.instance.currentUser != null) {
+      try {
+        await SupabaseWatchlistService.instance.removeSymbol(symbol);
+      } catch (_) {}
+    }
+  }
 
   @override
-  Future<List<String>> getWatchlist() => _service.getWatchlist();
+  Future<List<String>> getWatchlist() async {
+    final local = await _service.getWatchlist();
+    final user = SupabaseAuthService.instance.currentUser;
+    if (user == null) return local;
+    try {
+      final remote = await SupabaseWatchlistService.instance.fetchWatchlist();
+      // Treat local as the source of truth on read to avoid re-adding recently removed items
+      final localUpper = local.map((s) => s.toUpperCase()).toSet();
+      final remoteUpper = remote.map((s) => s.toUpperCase()).toSet();
+
+      // Push local-only to remote
+      final toAddRemote = localUpper.difference(remoteUpper).toList();
+      if (toAddRemote.isNotEmpty) {
+        await SupabaseWatchlistService.instance.addSymbolsBulk(toAddRemote);
+      }
+
+      // Do NOT pull remote-only into local here
+      return local;
+    } catch (_) {
+      return local;
+    }
+  }
 
   @override
   Future<bool> isInWatchlist(String symbol) => _service.isInWatchlist(symbol);
 
   @override
-  Future<void> clearWatchlist() => _service.clearWatchlist();
+  Future<void> clearWatchlist() async {
+    await _service.clearWatchlist();
+    if (SupabaseAuthService.instance.currentUser != null) {
+      try {
+        await SupabaseWatchlistService.instance.clearAll();
+      } catch (_) {}
+    }
+  }
 
   @override
-  Future<void> deleteOldStockData(DateTime before) =>
-      _service.deleteOldStockData(before);
+  Future<void> deleteOldStockData(DateTime before) => _service.deleteOldStockData(before);
 
   @override
-  Future<int> getStockDataCount(String symbol) =>
-      _service.getStockDataCount(symbol);
+  Future<int> getStockDataCount(String symbol) => _service.getStockDataCount(symbol);
 
   @override
-  Future<int> getPatternMatchCount({String? symbol}) =>
-      _service.getPatternMatchCount(symbol: symbol);
+  Future<int> getPatternMatchCount({String? symbol}) => _service.getPatternMatchCount(symbol: symbol);
 
   @override
   Future<void> close() => _service.close();
@@ -142,8 +147,7 @@ class PlatformDatabaseService implements DatabaseServiceInterface {
   Future<void> deleteDatabase() => _service.deleteDatabase();
 
   @override
-  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) =>
-      _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
+  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) => _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
 }
 
 // Adapter for the original SQLite service

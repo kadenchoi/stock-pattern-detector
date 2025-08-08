@@ -1,3 +1,17 @@
+# Environment files
+.env
+financial_pattern_detector/.env
+financial_pattern_detector/.database
+
+# Local databases
+*.db
+financial_pattern_detector/build/
+financial_pattern_detector/.dart_tool/
+financial_pattern_detector/.flutter-plugins
+financial_pattern_detector/.flutter-plugins-dependencies
+financial_pattern_detector/.packages
+financial_pattern_detector/ios/Pods/
+financial_pattern_detector/macos/Pods/
 # Miscellaneous
 *.class
 *.log
