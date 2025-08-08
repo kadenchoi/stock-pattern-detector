@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/platform_database_service.dart';
 import 'services/supabase_auth_service.dart';
+import 'services/background_task_service.dart';
+import 'services/pattern_cache_service.dart';
 import 'ui/screens/auth_gate.dart';
 
 void main() async {
@@ -15,6 +17,12 @@ void main() async {
 
   // Initialize Supabase auth
   await SupabaseAuthService.instance.initialize();
+
+  // Initialize caches
+  await PatternCacheService.instance.initialize();
+
+  // Configure background tasks (iOS/macOS)
+  await BackgroundTaskService.instance.configure();
 
   runApp(const FinancialPatternDetectorApp());
 }

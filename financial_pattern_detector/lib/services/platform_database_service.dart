@@ -11,10 +11,19 @@ abstract class DatabaseServiceInterface {
   Future<void> initialize();
   Future<void> insertStockData(List<StockData> stockDataList);
   Future<void> insertStockDataBatch(List<StockData> stockDataList);
-  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit});
+  Future<List<StockData>> getStockData(
+      {required String symbol,
+      DateTime? startDate,
+      DateTime? endDate,
+      int? limit});
   Future<StockData?> getLatestStockData(String symbol);
   Future<void> insertPatternMatch(PatternMatch patternMatch);
-  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit});
+  Future<List<PatternMatch>> getPatternMatches(
+      {String? symbol,
+      DateTime? startDate,
+      DateTime? endDate,
+      double? minScore,
+      int? limit});
   Future<PatternMatch?> getPatternMatch(String id);
   Future<void> deletePatternMatch(String id);
   Future<void> deleteOldPatternMatches(DateTime before);
@@ -34,44 +43,67 @@ abstract class DatabaseServiceInterface {
 // Platform-aware facade that wraps the appropriate adapter (SQLite/Hive)
 class PlatformDatabaseService implements DatabaseServiceInterface {
   static PlatformDatabaseService? _instance;
-  static PlatformDatabaseService get instance => _instance ??= PlatformDatabaseService._internal();
+  static PlatformDatabaseService get instance =>
+      _instance ??= PlatformDatabaseService._internal();
 
   final DatabaseServiceInterface _service;
 
   PlatformDatabaseService._internal()
-      : _service = kIsWeb ? _DatabaseServiceWebAdapter() : _DatabaseServiceAdapter();
+      : _service =
+            kIsWeb ? _DatabaseServiceWebAdapter() : _DatabaseServiceAdapter();
 
   @override
   Future<void> initialize() => _service.initialize();
 
   @override
-  Future<void> insertStockData(List<StockData> stockDataList) => _service.insertStockData(stockDataList);
+  Future<void> insertStockData(List<StockData> stockDataList) =>
+      _service.insertStockData(stockDataList);
 
   @override
-  Future<void> insertStockDataBatch(List<StockData> stockDataList) => _service.insertStockDataBatch(stockDataList);
+  Future<void> insertStockDataBatch(List<StockData> stockDataList) =>
+      _service.insertStockDataBatch(stockDataList);
 
   @override
-  Future<List<StockData>> getStockData({required String symbol, DateTime? startDate, DateTime? endDate, int? limit}) =>
-      _service.getStockData(symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
+  Future<List<StockData>> getStockData(
+          {required String symbol,
+          DateTime? startDate,
+          DateTime? endDate,
+          int? limit}) =>
+      _service.getStockData(
+          symbol: symbol, startDate: startDate, endDate: endDate, limit: limit);
 
   @override
-  Future<StockData?> getLatestStockData(String symbol) => _service.getLatestStockData(symbol);
+  Future<StockData?> getLatestStockData(String symbol) =>
+      _service.getLatestStockData(symbol);
 
   @override
-  Future<void> insertPatternMatch(PatternMatch patternMatch) => _service.insertPatternMatch(patternMatch);
+  Future<void> insertPatternMatch(PatternMatch patternMatch) =>
+      _service.insertPatternMatch(patternMatch);
 
   @override
-  Future<List<PatternMatch>> getPatternMatches({String? symbol, DateTime? startDate, DateTime? endDate, double? minScore, int? limit}) =>
-      _service.getPatternMatches(symbol: symbol, startDate: startDate, endDate: endDate, minScore: minScore, limit: limit);
+  Future<List<PatternMatch>> getPatternMatches(
+          {String? symbol,
+          DateTime? startDate,
+          DateTime? endDate,
+          double? minScore,
+          int? limit}) =>
+      _service.getPatternMatches(
+          symbol: symbol,
+          startDate: startDate,
+          endDate: endDate,
+          minScore: minScore,
+          limit: limit);
 
   @override
-  Future<PatternMatch?> getPatternMatch(String id) => _service.getPatternMatch(id);
+  Future<PatternMatch?> getPatternMatch(String id) =>
+      _service.getPatternMatch(id);
 
   @override
   Future<void> deletePatternMatch(String id) => _service.deletePatternMatch(id);
 
   @override
-  Future<void> deleteOldPatternMatches(DateTime before) => _service.deleteOldPatternMatches(before);
+  Future<void> deleteOldPatternMatches(DateTime before) =>
+      _service.deleteOldPatternMatches(before);
 
   @override
   Future<void> addToWatchlist(String symbol) async {
@@ -132,13 +164,16 @@ class PlatformDatabaseService implements DatabaseServiceInterface {
   }
 
   @override
-  Future<void> deleteOldStockData(DateTime before) => _service.deleteOldStockData(before);
+  Future<void> deleteOldStockData(DateTime before) =>
+      _service.deleteOldStockData(before);
 
   @override
-  Future<int> getStockDataCount(String symbol) => _service.getStockDataCount(symbol);
+  Future<int> getStockDataCount(String symbol) =>
+      _service.getStockDataCount(symbol);
 
   @override
-  Future<int> getPatternMatchCount({String? symbol}) => _service.getPatternMatchCount(symbol: symbol);
+  Future<int> getPatternMatchCount({String? symbol}) =>
+      _service.getPatternMatchCount(symbol: symbol);
 
   @override
   Future<void> close() => _service.close();
@@ -147,7 +182,8 @@ class PlatformDatabaseService implements DatabaseServiceInterface {
   Future<void> deleteDatabase() => _service.deleteDatabase();
 
   @override
-  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) => _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
+  Future<void> cleanupOldData({Duration? maxAge, int? maxRecords}) =>
+      _service.cleanupOldData(maxAge: maxAge, maxRecords: maxRecords);
 }
 
 // Adapter for the original SQLite service

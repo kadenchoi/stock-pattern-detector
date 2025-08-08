@@ -7,6 +7,7 @@ import '../services/pattern_analyzer.dart';
 import '../services/platform_database_service.dart';
 import '../services/alert_manager_factory.dart';
 import '../managers/settings_manager.dart';
+import '../services/pattern_cache_service.dart';
 
 class AppManager {
   static final AppManager _instance = AppManager._internal();
@@ -174,6 +175,8 @@ class AppManager {
       }
 
       _patternStreamController.add(allPatterns);
+      // Cache for offline/background access
+      await PatternCacheService.instance.cachePatterns(allPatterns);
 
       final patternCount = allPatterns.length;
       final newPatternCount = allPatterns
@@ -399,6 +402,11 @@ class AppManager {
 
   Future<void> runManualAnalysis() async {
     await _runAnalysisCycle();
+  }
+
+  // Quick access to last cached patterns (used by background/headless)
+  Future<List<PatternMatch>> getCachedPatterns() async {
+    return PatternCacheService.instance.getCachedPatterns();
   }
 
   Future<void> cleanupOldData() async {

@@ -57,11 +57,11 @@ class SupabaseWatchlistService {
   Future<void> removeSymbol(String symbol) async {
     final uid = _userId;
     if (uid == null) return;
-  await _client
-    .from('watchlist')
-    .delete()
-    .eq('user_id', uid)
-    .eq('symbol', symbol.toUpperCase());
+    await _client
+        .from('watchlist')
+        .delete()
+        .eq('user_id', uid)
+        .eq('symbol', symbol.toUpperCase());
   }
 
   Future<void> clearAll() async {
