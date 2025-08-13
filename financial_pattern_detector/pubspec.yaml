@@ -72,6 +72,9 @@ dependencies:
   # Auth & config
   supabase_flutter: ^2.6.0
   flutter_dotenv: ^5.1.0
+  firebase_ai: ^3.1.0
+  firebase_core: ^4.0.0
+  firebase_app_check: ^0.4.0
 
 dev_dependencies:
   flutter_test:

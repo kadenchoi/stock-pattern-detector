@@ -10,6 +10,13 @@
 			"problemMatcher": [
 				"$dart-flutter"
 			]
+		},
+		{
+			"label": "Run Financial Pattern Detector",
+			"type": "shell",
+			"command": "cd financial_pattern_detector && flutter run -d macos",
+			"isBackground": true,
+			"group": "build"
 		}
 	]
 }

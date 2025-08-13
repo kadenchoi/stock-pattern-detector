@@ -58,6 +58,12 @@ class AppManager {
       await _alertManager.initialize();
       await _alertManager.requestPermissions();
 
+      // Initialize pattern cache service
+      await PatternCacheService.instance.initialize();
+
+      // Load cached patterns on startup
+      await _loadCachedPatternsOnStartup();
+
       _updateStatus('Application initialized successfully');
       _isInitialized = true;
 
@@ -66,6 +72,38 @@ class AppManager {
     } catch (e) {
       _updateStatus('Initialization failed: $e');
       print('AppManager initialization error: $e');
+    }
+  }
+
+  /// Load cached patterns on app startup and emit to UI
+  Future<void> _loadCachedPatternsOnStartup() async {
+    try {
+      _updateStatus('Loading cached patterns...');
+
+      final cachedPatterns =
+          await PatternCacheService.instance.getAllCachedPatterns();
+
+      if (cachedPatterns.isNotEmpty) {
+        // Remove duplicates from cached patterns
+        final uniquePatterns =
+            PatternCacheService.instance.removeDuplicates(cachedPatterns);
+
+        // Emit cached patterns to UI immediately
+        _patternStreamController.add(uniquePatterns);
+
+        final cacheStats = await PatternCacheService.instance.getCacheStats();
+        final cacheAge = cacheStats['cacheAge'] as int?;
+
+        _updateStatus(
+          'Loaded ${uniquePatterns.length} cached patterns' +
+              (cacheAge != null ? ' (${cacheAge} minutes old)' : ''),
+        );
+      } else {
+        _updateStatus('No cached patterns found');
+      }
+    } catch (e) {
+      print('Error loading cached patterns: $e');
+      _updateStatus('Failed to load cached patterns');
     }
   }
 
@@ -134,8 +172,12 @@ class AppManager {
       _lastStockData = stockDataMap;
       _stockDataStreamController.add(_lastStockData);
 
+      // Load cached patterns first
+      final cachedPatterns =
+          await PatternCacheService.instance.getAllCachedPatterns();
+
       // Store data in database and analyze patterns
-      final allPatterns = <PatternMatch>[];
+      final freshPatterns = <PatternMatch>[];
 
       for (final entry in stockDataMap.entries) {
         final symbol = entry.key;
@@ -157,46 +199,47 @@ class AppManager {
           minConfidence: settings.patternMatchThreshold,
         );
 
-        // Filter new patterns (not already in database)
-        final newPatterns = await _filterNewPatterns(patterns);
+        // Enrich patterns with prediction data
+        final enrichedPatterns = patterns
+            .map((p) =>
+                PatternPredictionService.instance.enrich(p, stockSeries.data))
+            .toList();
 
-        // Store new patterns and send alerts
-        for (final pattern in newPatterns) {
-          final enriched = PatternPredictionService.instance.enrich(
-            pattern,
-            stockSeries.data,
-          );
-          await _databaseService.insertPatternMatch(enriched);
-          await _alertManager.sendPatternAlert(
-            pattern: enriched,
-            settings: settings,
-          );
-        }
+        freshPatterns.addAll(enrichedPatterns);
+      }
 
-        // Also keep enriched versions in stream
-        allPatterns.addAll(
-          patterns
-              .map((p) =>
-                  PatternPredictionService.instance.enrich(p, stockSeries.data))
-              .toList(),
+      // Merge cached patterns with fresh patterns, removing duplicates
+      final allPatterns = PatternCacheService.instance.mergePatterns(
+        cachedPatterns,
+        freshPatterns,
+      );
+
+      // Filter truly new patterns for alerts (not in database)
+      final newPatterns = await _filterNewPatterns(freshPatterns);
+
+      // Store new patterns and send alerts
+      for (final pattern in newPatterns) {
+        await _databaseService.insertPatternMatch(pattern);
+        await _alertManager.sendPatternAlert(
+          pattern: pattern,
+          settings: settings,
         );
       }
 
-      _patternStreamController.add(allPatterns);
-      // Cache for offline/background access
-      await PatternCacheService.instance.cachePatterns(allPatterns);
+      // Update caches with all patterns
+      await PatternCacheService.instance.cachePatterns(freshPatterns);
+      await PatternCacheService.instance.cacheAllPatterns(allPatterns);
 
-      final patternCount = allPatterns.length;
-      final newPatternCount = allPatterns
-          .where(
-            (p) => p.detectedAt.isAfter(
-              DateTime.now().subtract(const Duration(hours: 1)),
-            ),
-          )
-          .length;
+      // Emit merged patterns to UI
+      _patternStreamController.add(allPatterns);
+
+      final newPatternCount = newPatterns.length;
+      final totalPatternCount = allPatterns.length;
+      final cachedCount = cachedPatterns.length;
 
       _updateStatus(
-        'Analysis complete - Found $patternCount patterns ($newPatternCount new)',
+        'Analysis complete - Found $totalPatternCount patterns ' +
+            '($newPatternCount new, $cachedCount cached)',
       );
     } catch (e) {
       _updateStatus('Analysis failed: $e');
@@ -416,6 +459,51 @@ class AppManager {
   // Quick access to last cached patterns (used by background/headless)
   Future<List<PatternMatch>> getCachedPatterns() async {
     return PatternCacheService.instance.getCachedPatterns();
+  }
+
+  /// Get all cached patterns including historical ones
+  Future<List<PatternMatch>> getAllCachedPatterns() async {
+    return PatternCacheService.instance.getAllCachedPatterns();
+  }
+
+  /// Get patterns with smart caching - returns cached patterns merged with fresh data if available
+  Future<List<PatternMatch>> getPatternsWithCache() async {
+    try {
+      // Get cached patterns first for immediate response
+      final cachedPatterns =
+          await PatternCacheService.instance.getAllCachedPatterns();
+
+      // If we have recent cached data (less than 1 hour old), return it
+      final lastUpdate = await PatternCacheService.instance.getLastUpdateTime();
+      if (lastUpdate != null &&
+          DateTime.now().difference(lastUpdate).inHours < 1) {
+        return PatternCacheService.instance.removeDuplicates(cachedPatterns);
+      }
+
+      // Otherwise, try to get fresh data if possible
+      final settings = await _settingsManager.getSettings();
+      if (settings.watchlist.isNotEmpty && !_isAnalyzing) {
+        // Trigger a fresh analysis cycle
+        _runAnalysisCycle();
+      }
+
+      // Return cached data for now
+      return PatternCacheService.instance.removeDuplicates(cachedPatterns);
+    } catch (e) {
+      print('Error getting patterns with cache: $e');
+      return [];
+    }
+  }
+
+  /// Clear all cached patterns
+  Future<void> clearPatternCache() async {
+    await PatternCacheService.instance.clear();
+    _updateStatus('Pattern cache cleared');
+  }
+
+  /// Get cache statistics
+  Future<Map<String, dynamic>> getCacheStats() async {
+    return await PatternCacheService.instance.getCacheStats();
   }
 
   Future<void> cleanupOldData() async {

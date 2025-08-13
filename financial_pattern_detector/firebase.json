@@ -1,4 +1,34 @@
 {
+  "flutter": {
+    "platforms": {
+      "ios": {
+        "default": {
+          "projectId": "financialtool-14c69",
+          "appId": "1:64303259768:ios:a940f5d1d2398592904d8d",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "financialtool-14c69",
+          "appId": "1:64303259768:ios:a940f5d1d2398592904d8d",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "financialtool-14c69",
+          "configurations": {
+            "ios": "1:64303259768:ios:a940f5d1d2398592904d8d",
+            "macos": "1:64303259768:ios:a940f5d1d2398592904d8d",
+            "web": "1:64303259768:web:ad9629edfb83c17e904d8d"
+          }
+        }
+      }
+    }
+  },
   "hosting": {
     "public": "build/web",
     "ignore": [

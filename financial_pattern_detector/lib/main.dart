@@ -1,13 +1,23 @@
+import 'package:financial_pattern_detector/firebase_options.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/platform_database_service.dart';
 import 'services/supabase_auth_service.dart';
 import 'services/background_task_service.dart';
 import 'services/pattern_cache_service.dart';
+import 'services/firebase_ai_service.dart';
+import 'services/ai_response_cache_service.dart';
 import 'ui/screens/auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize Hive for local storage
   await Hive.initFlutter();
@@ -20,9 +30,23 @@ void main() async {
 
   // Initialize caches
   await PatternCacheService.instance.initialize();
+  await AiResponseCacheService.instance.initialize();
 
   // Configure background tasks (iOS/macOS only - automatically disabled on web)
   await BackgroundTaskService.instance.configure();
+
+  // Firebase appcheck
+  await FirebaseAppCheck.instance.activate(
+    // You can also use a `ReCaptchaEnterpriseProvider` provider instance as an
+    // argument for `webProvider`
+    webProvider:
+        ReCaptchaV3Provider('16dbb24775fc501e3c8d3b60d676cbe75d14c868'),
+    androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug,
+  );
+
+  // Initialize Firebase AI service
+  await FirebaseAiService.instance.initializeModel();
 
   runApp(const FinancialPatternDetectorApp());
 }
