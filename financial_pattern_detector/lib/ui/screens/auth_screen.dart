@@ -38,6 +38,134 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   bool get _isSignUp => _tabController.index == 1;
 
+  void _showEmailVerificationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.email_outlined,
+                color: colorScheme.primary,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              const Text('Verify Your Email'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'We\'ve sent a verification email to:',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _emailController.text.trim(),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please check your email and click the verification link to complete your registration.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Check your spam folder if you don\'t see the email.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                // Resend verification email
+                try {
+                  await SupabaseAuthService.instance.signUpWithEmail(
+                    email: _emailController.text.trim(),
+                    password: _passwordController.text,
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Verification email sent again!'),
+                        backgroundColor: colorScheme.primary,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to resend: ${e.toString()}'),
+                        backgroundColor: colorScheme.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.primary,
+              ),
+              child: const Text('Resend Email'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Switch back to sign in tab
+                _tabController.animateTo(0);
+                _emailController.clear();
+                _passwordController.clear();
+                _confirmPasswordController.clear();
+                _formKey.currentState?.reset();
+                setState(() {
+                  _error = null;
+                });
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Email is required';
@@ -83,6 +211,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        // Show email verification dialog for sign up
+        _showEmailVerificationDialog();
       } else {
         await SupabaseAuthService.instance.signInWithEmail(
           email: _emailController.text.trim(),
@@ -153,6 +283,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                               color: colorScheme.primary,
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            indicatorSize: TabBarIndicatorSize.tab,
                             labelColor: colorScheme.onPrimary,
                             unselectedLabelColor: colorScheme.onSurfaceVariant,
                             dividerColor: Colors.transparent,
