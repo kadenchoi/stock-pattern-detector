@@ -21,7 +21,7 @@ void main() async {
   // Initialize caches
   await PatternCacheService.instance.initialize();
 
-  // Configure background tasks (iOS/macOS)
+  // Configure background tasks (iOS/macOS only - automatically disabled on web)
   await BackgroundTaskService.instance.configure();
 
   runApp(const FinancialPatternDetectorApp());

@@ -3,6 +3,7 @@ import 'package:financial_pattern_detector/models/pattern_detection.dart';
 import 'package:flutter/material.dart';
 import '../../models/stock_data.dart';
 import '../../utils/pattern_filter_service.dart';
+import '../../services/supabase_auth_service.dart';
 import 'settings_screen.dart';
 import 'pattern_details_screen.dart';
 import '../widgets/pattern_card.dart';
@@ -97,6 +98,25 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             onPressed: _openSettings,
             icon: const Icon(Icons.settings),
             tooltip: 'Settings',
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'signOut') {
+                _signOut();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'signOut',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout),
+                    SizedBox(width: 8),
+                    Text('Sign Out'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
         bottom: TabBar(
@@ -485,6 +505,21 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         builder: (context) => PatternDetailsScreen(pattern: pattern),
       ),
     );
+  }
+
+  Future<void> _signOut() async {
+    try {
+      await SupabaseAuthService.instance.signOut();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to sign out: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

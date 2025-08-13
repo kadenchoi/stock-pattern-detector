@@ -1,7 +1,11 @@
 import 'dart:async';
-import 'package:background_fetch/background_fetch.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../managers/app_manager.dart';
 import '../services/pattern_cache_service.dart';
+
+// Conditional import for background_fetch (only for non-web platforms)
+import 'background_task_service_stub.dart'
+    if (dart.library.io) 'background_task_service_impl.dart' as bg_service;
 
 class BackgroundTaskService {
   static final BackgroundTaskService instance = BackgroundTaskService._();
@@ -12,27 +16,20 @@ class BackgroundTaskService {
   Future<void> configure() async {
     if (_configured) return;
 
-    // Configure background fetch
-    await BackgroundFetch.configure(
-      BackgroundFetchConfig(
-        minimumFetchInterval: 15, // minutes (iOS decides actual schedule)
-        startOnBoot: true,
-        stopOnTerminate: false,
-        enableHeadless: true,
-        requiredNetworkType: NetworkType.ANY,
-      ),
-      _onBackgroundFetch,
-      _onBackgroundFetchTimeout,
-    );
+    // Skip background fetch configuration on web platform
+    if (kIsWeb) {
+      _configured = true;
+      return;
+    }
 
-    // Register a task id used by iOS
-    await BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
-
+    // Delegate to platform-specific implementation
+    await bg_service.configurePlatformBackgroundTasks();
     _configured = true;
   }
 }
 
-Future<void> _onBackgroundFetch(String taskId) async {
+// Shared background task logic
+Future<void> onBackgroundFetch(String taskId) async {
   try {
     final app = AppManager();
     await app.runManualAnalysis();
@@ -46,21 +43,14 @@ Future<void> _onBackgroundFetch(String taskId) async {
   } catch (e) {
     // Log error
   } finally {
-    BackgroundFetch.finish(taskId);
+    if (!kIsWeb) {
+      bg_service.finishBackgroundTask(taskId);
+    }
   }
 }
 
-void _onBackgroundFetchTimeout(String taskId) {
-  BackgroundFetch.finish(taskId);
-}
-
-// iOS headless task entrypoint
-void backgroundFetchHeadlessTask(HeadlessTask task) async {
-  final String taskId = task.taskId;
-  final bool timeout = task.timeout;
-  if (timeout) {
-    BackgroundFetch.finish(taskId);
-    return;
+void onBackgroundFetchTimeout(String taskId) {
+  if (!kIsWeb) {
+    bg_service.finishBackgroundTask(taskId);
   }
-  await _onBackgroundFetch(taskId);
 }
