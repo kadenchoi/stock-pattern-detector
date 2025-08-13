@@ -11,11 +11,11 @@ class SupabaseAuthService {
 
   Future<void> initialize() async {
     if (_initialized) return;
-    await dotenv.load(fileName: '.env');
+    await dotenv.load(fileName: 'dotenv');
     final url = dotenv.env['SUPABASE_URL'];
     final anonKey = dotenv.env['SUPABASE_ANON_KEY'];
     if (url == null || anonKey == null) {
-      throw StateError('Missing SUPABASE_URL or SUPABASE_ANON_KEY in .env');
+      throw StateError('Missing SUPABASE_URL or SUPABASE_ANON_KEY in dotenv');
     }
     await Supabase.initialize(url: url, anonKey: anonKey);
     _initialized = true;

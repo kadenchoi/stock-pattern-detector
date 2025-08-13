@@ -1,6 +1,6 @@
 # Environment files
 .env
-financial_pattern_detector/.env
+financial_pattern_detector/dotenv
 financial_pattern_detector/.database
 
 # Local databases
@@ -97,3 +97,6 @@ test_functionality.dart
 
 #DATABASE
 .database
+
+# Firebase
+.firebase/

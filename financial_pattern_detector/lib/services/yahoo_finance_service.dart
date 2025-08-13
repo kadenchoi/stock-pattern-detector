@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import '../models/stock_data.dart';
 import '../models/app_settings.dart';
@@ -8,6 +9,9 @@ import '../models/app_settings.dart';
 class YahooFinanceService {
   static const String _baseUrl =
       'https://query1.finance.yahoo.com/v8/finance/chart';
+
+  // CORS proxy for web platform
+  static const String _corsProxy = 'https://api.allorigins.win/get?url=';
 
   final http.Client _httpClient;
 
@@ -21,25 +25,48 @@ class YahooFinanceService {
     String range = '1mo',
   }) async {
     try {
-      final url = Uri.parse('$_baseUrl/$symbol');
-      final queryParams = {
-        'interval': period.value,
-        'range': range,
-        'includeAdjustedClose': 'true',
+      String requestUrl;
+      Map<String, String> headers = {
+        'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
       };
 
-      final uri = url.replace(queryParameters: queryParams);
+      if (kIsWeb) {
+        // Use CORS proxy for web
+        final yahooUrl = '$_baseUrl/$symbol';
+        final queryParams = {
+          'interval': period.value,
+          'range': range,
+          'includeAdjustedClose': 'true',
+        };
+        final uri = Uri.parse(yahooUrl).replace(queryParameters: queryParams);
+        requestUrl = '$_corsProxy${Uri.encodeComponent(uri.toString())}';
+      } else {
+        // Direct call for mobile/desktop
+        final url = Uri.parse('$_baseUrl/$symbol');
+        final queryParams = {
+          'interval': period.value,
+          'range': range,
+          'includeAdjustedClose': 'true',
+        };
+        final uri = url.replace(queryParameters: queryParams);
+        requestUrl = uri.toString();
+      }
 
       final response = await _httpClient.get(
-        uri,
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        },
+        Uri.parse(requestUrl),
+        headers: headers,
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        dynamic data;
+        if (kIsWeb) {
+          // Parse the proxy response (which wraps the Yahoo response)
+          final proxyResponse = json.decode(response.body);
+          data = json.decode(proxyResponse['contents']);
+        } else {
+          data = json.decode(response.body);
+        }
         return _parseYahooResponse(symbol, data);
       } else {
         print('Failed to fetch data for $symbol: ${response.statusCode}');
