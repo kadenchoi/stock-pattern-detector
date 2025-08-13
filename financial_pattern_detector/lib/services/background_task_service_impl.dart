@@ -1,28 +1,15 @@
 // Platform implementation with background_fetch (mobile/desktop)
-import 'package:background_fetch/background_fetch.dart';
-import 'background_task_service.dart' as bg_service;
+// import 'package:background_fetch/background_fetch.dart';  // Temporarily disabled for Android build
+// import 'background_task_service.dart' as bg_service;
 
 Future<void> configurePlatformBackgroundTasks() async {
-  // Configure BackgroundFetch
-  await BackgroundFetch.configure(
-    BackgroundFetchConfig(
-      minimumFetchInterval: 60, // 1 hour
-      stopOnTerminate: false,
-      enableHeadless: true,
-      requiredNetworkType: NetworkType.ANY,
-    ),
-    (String taskId) async {
-      await bg_service.onBackgroundFetch(taskId);
-    },
-    (String taskId) {
-      bg_service.onBackgroundFetchTimeout(taskId);
-    },
-  );
-
-  // Start background fetch
-  BackgroundFetch.start();
+  // Temporarily disabled for Android build compatibility
+  // Background task configuration would go here when background_fetch is re-enabled
+  print('Background tasks configuration disabled for Android compatibility');
 }
 
 void finishBackgroundTask(String taskId) {
-  BackgroundFetch.finish(taskId);
+  // Temporarily disabled for Android build compatibility
+  // BackgroundFetch.finish(taskId) would go here when background_fetch is re-enabled
+  print('Background task finish disabled for Android compatibility: $taskId');
 }

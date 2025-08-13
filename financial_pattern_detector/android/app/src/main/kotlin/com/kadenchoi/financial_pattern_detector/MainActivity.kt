@@ -1,4 +1,4 @@
-package com.example.financial_pattern_detector
+package com.kadenchoi.financial_pattern_detector
 
 import io.flutter.embedding.android.FlutterActivity
 
