@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/stock_data.dart';
 import '../../models/pattern_detection.dart';
-import '../../services/ai_trading_strategy_service.dart';
+import '../../services/watchlist_technical_analysis_service.dart';
 import '../../managers/app_manager.dart';
 
 class WatchlistWidget extends StatefulWidget {
@@ -26,8 +26,8 @@ class WatchlistWidget extends StatefulWidget {
 }
 
 class _WatchlistWidgetState extends State<WatchlistWidget> {
-  final AITradingStrategyService _aiTradingService =
-      AITradingStrategyService.instance;
+  final WatchlistTechnicalAnalysisService _technicalAnalysisService =
+      WatchlistTechnicalAnalysisService.instance;
   final Map<String, Map<String, dynamic>?> _aiAnalysisResults = {};
   final Map<String, bool> _aiAnalysisLoading = {};
 
@@ -254,7 +254,7 @@ class _WatchlistWidgetState extends State<WatchlistWidget> {
                 label: Text(
                   _aiAnalysisLoading[symbol] == true
                       ? 'Analyzing...'
-                      : 'AI Strategy Analysis',
+                      : 'AI Technical Analysis',
                   style: const TextStyle(fontSize: 12),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -378,15 +378,11 @@ class _WatchlistWidgetState extends State<WatchlistWidget> {
         throw Exception('No stock data available for $symbol');
       }
 
-      // Get patterns for this symbol
-      final patterns =
-          widget.patterns.where((p) => p.symbol == symbol).toList();
-
-      // Perform AI analysis
-      final result = await _aiTradingService.analyzeSymbolStrategy(
+      // Perform AI technical analysis (no patterns needed)
+      final result =
+          await _technicalAnalysisService.analyzeSymbolTechnicalStrategy(
         symbol: symbol,
         stockData: stockDataSeries,
-        patterns: patterns,
       );
 
       setState(() {
