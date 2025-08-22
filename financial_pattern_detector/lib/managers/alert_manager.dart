@@ -151,11 +151,13 @@ class AlertManager {
                 <p><strong>Confidence Score:</strong> <span class="confidence">${pattern.matchPercentage.toStringAsFixed(1)}%</span></p>
                 <p><strong>Detected At:</strong> ${_formatDateTime(pattern.detectedAt)}</p>
                 <p><strong>Pattern Period:</strong> ${_formatDateTime(pattern.startTime)} to ${_formatDateTime(pattern.endTime)}</p>
-                ${pattern.priceTarget != null ? '<p><strong>Price Target:</strong> \$${pattern.priceTarget!.toStringAsFixed(2)}</p>' : ''}
+                ${pattern.metadata['theoreticalTarget'] != null ? '<p><strong>Theoretical Target:</strong> \$${(pattern.metadata['theoreticalTarget'] as num).toStringAsFixed(2)} <em>(Educational only)</em></p>' : ''}
             </div>
             
             <h3>Description</h3>
             <p>${pattern.description}</p>
+            
+            <p><strong>⚠️ Disclaimer:</strong> This analysis is for educational purposes only and should not be considered financial advice.</p>
             
             <hr>
             <p style="color: #666; font-size: 0.9em;">

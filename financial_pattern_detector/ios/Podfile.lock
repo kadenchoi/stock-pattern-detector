@@ -1,12 +1,10 @@
 PODS:
-  - app_links (0.0.2):
+  - app_links (6.4.1):
     - Flutter
   - AppCheckCore (11.2.0):
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
-  - background_fetch (1.4.0):
-    - Flutter
   - Firebase/Auth (12.0.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 12.0.0)
@@ -95,7 +93,6 @@ PODS:
 
 DEPENDENCIES:
   - app_links (from `.symlinks/plugins/app_links/ios`)
-  - background_fetch (from `.symlinks/plugins/background_fetch/ios`)
   - firebase_app_check (from `.symlinks/plugins/firebase_app_check/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
@@ -126,8 +123,6 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   app_links:
     :path: ".symlinks/plugins/app_links/ios"
-  background_fetch:
-    :path: ".symlinks/plugins/background_fetch/ios"
   firebase_app_check:
     :path: ".symlinks/plugins/firebase_app_check/ios"
   firebase_auth:
@@ -150,9 +145,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  app_links: 76b66b60cc809390ca1ad69bfd66b998d2387ac7
+  app_links: 3dbc685f76b1693c66a6d9dd1e9ab6f73d97dc0a
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
-  background_fetch: 81d0f20490f0126a1c29709e458f47a69e80f44e
   Firebase: 800d487043c0557d9faed71477a38d9aafb08a41
   firebase_app_check: 967c2ec2cf3d109d1ead13889994b62e3868d6d3
   firebase_auth: 4734e8223034e214039a9a805ff2cfb323223e34
@@ -164,7 +158,7 @@ SPEC CHECKSUMS:
   FirebaseCore: 055f4ab117d5964158c833f3d5e7ec6d91648d4a
   FirebaseCoreExtension: 639afb3de6abd611952be78a794c54a47fa0f361
   FirebaseCoreInternal: dedc28e569a4be85f38f3d6af1070a2e12018d55
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_local_notifications: ad39620c743ea4c15127860f4b5641649a988100
   flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1

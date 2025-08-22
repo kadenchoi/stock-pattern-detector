@@ -72,6 +72,15 @@ class FirebaseAiService {
     return response;
   }
 
+  /// Analyzes a stock by MACD & RSI & fundamental data
+  /// Generate trading strategy for short term / mid term / long term
+  Future<TradingStrategy?> analyzeTechnicalForStrategy({
+    required String symbol,
+    required List<StockData> stockHistory,
+  }) async {
+    // Implement technical analysis logic here
+  }
+
   /// Analyzes a stock pattern and generates trading strategy
   Future<TradingStrategy?> analyzePatternForStrategy({
     required PatternMatch pattern,

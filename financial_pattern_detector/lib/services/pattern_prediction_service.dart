@@ -6,6 +6,8 @@ class PatternPredictionService {
   PatternPredictionService._();
 
   // Returns a copy of pattern with augmented metadata and priceTarget
+  // WARNING: These are theoretical calculations based on traditional technical analysis
+  // patterns and should NOT be used as actual trading signals or financial advice
   PatternMatch enrich(PatternMatch pattern, List<StockData> series) {
     final data = series;
     if (data.isEmpty) return pattern;
@@ -103,10 +105,14 @@ class PatternPredictionService {
     final enrichedMeta = Map<String, dynamic>.from(pattern.metadata)
       ..addAll({
         'entryPrice': lastPrice,
-        'targetPrice': target,
-        'stopPrice': stop,
-        'expectedHorizonDays': horizonDays,
-        'predictionConfidence': pattern.matchScore,
+        'theoreticalTarget':
+            target, // Changed from targetPrice to be more explicit
+        'theoreticalStop': stop, // Changed from stopPrice to be more explicit
+        'estimatedHorizonDays': horizonDays, // Changed to estimated
+        'patternMatchScore': pattern
+            .matchScore, // Clarified this is pattern matching, not prediction confidence
+        'disclaimer':
+            'Theoretical values for educational purposes only. Not financial advice.',
       });
 
     return PatternMatch(
@@ -118,8 +124,9 @@ class PatternPredictionService {
       detectedAt: pattern.detectedAt,
       startTime: pattern.startTime,
       endTime: pattern.endTime,
-      priceTarget: target,
-      description: pattern.description,
+      priceTarget:
+          null, // Removed misleading price target - theoretical only in metadata
+      description: '${pattern.description} (Theoretical analysis only)',
       metadata: enrichedMeta,
     );
   }

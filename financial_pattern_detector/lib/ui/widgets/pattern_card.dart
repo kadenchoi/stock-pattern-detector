@@ -87,19 +87,19 @@ class PatternCard extends StatelessWidget {
               ),
             ),
 
-            // Price target if available
-            if (pattern.priceTarget != null)
+            // Theoretical target if available (with disclaimer)
+            if (pattern.metadata['theoreticalTarget'] != null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: Text(
-                  '\$${pattern.priceTarget!.toStringAsFixed(2)}',
+                  'Theory: \$${(pattern.metadata['theoreticalTarget'] as num).toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Colors.green,
+                    color: Colors.orange,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

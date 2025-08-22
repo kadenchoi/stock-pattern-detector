@@ -198,10 +198,16 @@ class _PatternDetailsScreenState extends State<PatternDetailsScreen> {
               'Confidence',
               '${widget.pattern.matchPercentage.toStringAsFixed(1)}%',
             ),
-            if (widget.pattern.priceTarget != null)
+            // Show theoretical targets if available
+            if (widget.pattern.metadata['theoreticalTarget'] != null)
               _buildDetailRow(
-                'Price Target',
-                '\$${widget.pattern.priceTarget!.toStringAsFixed(2)}',
+                'Theoretical Target',
+                '\$${(widget.pattern.metadata['theoreticalTarget'] as num).toStringAsFixed(2)} (Educational only)',
+              ),
+            if (widget.pattern.metadata['theoreticalStop'] != null)
+              _buildDetailRow(
+                'Theoretical Stop',
+                '\$${(widget.pattern.metadata['theoreticalStop'] as num).toStringAsFixed(2)} (Educational only)',
               ),
             _buildDetailRow('Pattern ID', widget.pattern.id),
           ],

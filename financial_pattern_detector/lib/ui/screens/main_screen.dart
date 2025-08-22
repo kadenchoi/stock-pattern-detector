@@ -131,6 +131,29 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       body: Column(
         children: [
           StatusIndicator(status: _currentStatus),
+          // Educational Disclaimer Banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Colors.orange.shade50,
+            child: Row(
+              children: [
+                Icon(Icons.info_outline,
+                    color: Colors.orange.shade700, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Educational tool only. Analysis is theoretical and not financial advice.',
+                    style: TextStyle(
+                      color: Colors.orange.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -350,6 +373,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       stockData: _stockData,
       onAddSymbol: _showAddSymbolDialog,
       onRemoveSymbol: _removeSymbol,
+      appManager: _appManager,
+      patterns: _patterns,
     );
   }
 

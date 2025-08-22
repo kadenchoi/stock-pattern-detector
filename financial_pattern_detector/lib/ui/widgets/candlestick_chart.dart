@@ -157,8 +157,8 @@ class _CandlestickChartState extends State<CandlestickChart> {
 
   List<CartesianChartAnnotation> _buildPatternAnnotations(
       PatternMatch pattern) {
-    final target = pattern.metadata['targetPrice'] as num?;
-    final stop = pattern.metadata['stopPrice'] as num?;
+    final target = pattern.metadata['theoreticalTarget'] as num?;
+    final stop = pattern.metadata['theoreticalStop'] as num?;
     final labelColor = pattern.direction == PatternDirection.bullish
         ? Colors.green
         : (pattern.direction == PatternDirection.bearish
@@ -178,8 +178,8 @@ class _CandlestickChartState extends State<CandlestickChart> {
           },
           child: Transform.translate(
             offset: const Offset(8, -8),
-            child:
-                _priceLabel('TARGET ${target.toStringAsFixed(2)}', labelColor),
+            child: _priceLabel(
+                'THEORETICAL ${target.toStringAsFixed(2)}', labelColor),
           ),
         ),
         coordinateUnit: CoordinateUnit.point,
@@ -199,7 +199,8 @@ class _CandlestickChartState extends State<CandlestickChart> {
           },
           child: Transform.translate(
             offset: const Offset(8, 8),
-            child: _priceLabel('STOP ${stop.toStringAsFixed(2)}', Colors.grey),
+            child:
+                _priceLabel('THEORY ${stop.toStringAsFixed(2)}', Colors.grey),
           ),
         ),
         coordinateUnit: CoordinateUnit.point,
