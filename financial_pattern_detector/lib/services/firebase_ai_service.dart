@@ -88,11 +88,18 @@ class FirebaseAiService {
       final stockDataJson =
           _prepareStockDataForAI(symbol, stockHistory, technicalData);
 
-      // Generate system message for technical analysis
+      // Generate system message for technical analysis (without embedded JSON)
       final systemMessage =
-          _generateTechnicalSystemMessage(symbol, stockDataJson, technicalData);
+          _generateTechnicalSystemMessage(symbol, technicalData);
 
-      final prompt = [Content.text(systemMessage)];
+      // Create prompt with inline data and text
+      final prompt = [
+        Content.inlineData(
+          'application/json',
+          utf8.encode(stockDataJson),
+        ),
+        Content.text(systemMessage),
+      ];
       final response = await _model.generateContent(prompt);
 
       if (response.text == null) return null;
@@ -278,12 +285,12 @@ class FirebaseAiService {
   }
 
   String _generateTechnicalSystemMessage(
-      String symbol, String stockDataJson, Map<String, dynamic> technicalData) {
+      String symbol, Map<String, dynamic> technicalData) {
     return '''
-You are an expert quantitative analyst and trading strategist specializing in technical analysis. Analyze the following stock data and generate comprehensive trading strategies for different time horizons.
+You are an expert quantitative analyst and trading strategist specializing in technical analysis. Analyze the attached stock data (provided as JSON) and generate comprehensive trading strategies for different time horizons.
 
-STOCK DATA (JSON FORMAT):
-$stockDataJson
+ATTACHED DATA CONTEXT:
+The attached JSON file contains complete stock price history and calculated technical indicators for symbol: $symbol
 
 CURRENT TECHNICAL INDICATORS SUMMARY:
 - MACD: ${technicalData['macd']['macd']?.toStringAsFixed(4)} (Signal: ${technicalData['macd']['signal']?.toStringAsFixed(4)}, Histogram: ${technicalData['macd']['histogram']?.toStringAsFixed(4)})
@@ -297,7 +304,7 @@ CURRENT TECHNICAL INDICATORS SUMMARY:
 - Resistance Level: \$${technicalData['resistance']?.toStringAsFixed(2)}
 
 ANALYSIS REQUIREMENTS:
-Based on the provided stock data and technical indicators, generate a trading strategy that covers:
+Based on the attached JSON stock data and technical indicators, generate a trading strategy that covers:
 
 1. PRIMARY RECOMMENDATION: BUY, SELL, or HOLD
 2. CONFIDENCE LEVEL: 0.0 to 1.0 based on technical signal strength
@@ -313,12 +320,20 @@ Based on the provided stock data and technical indicators, generate a trading st
 9. KEY FACTORS: Critical technical signals driving the strategy
 
 TECHNICAL ANALYSIS FOCUS:
-- MACD signals and crossovers
-- RSI overbought/oversold conditions
+Please analyze the attached JSON data focusing on:
+- MACD signals and crossovers from the priceData
+- RSI overbought/oversold conditions 
 - Moving average trends and crossovers
-- Volume analysis and confirmation
-- Support and resistance levels
-- Price action patterns in the data
+- Volume analysis and confirmation patterns
+- Support and resistance levels from price history
+- Price action patterns in the historical data
+
+DATA STRUCTURE REFERENCE:
+The attached JSON contains:
+- symbol: Stock ticker
+- currentPrice: Latest closing price
+- technicalIndicators: Calculated MACD, RSI, SMA values
+- priceData: Array of historical OHLCV data with timestamps
 
 Please respond in the following JSON format:
 {
@@ -344,13 +359,14 @@ Please respond in the following JSON format:
   }
 }
 
-Consider:
-- MACD histogram direction and signal line crossovers
-- RSI divergences and extreme readings
-- Moving average slopes and crossovers
-- Volume spikes and confirmation
-- Break of key support/resistance levels
-- Overall technical momentum and trend strength
+Consider when analyzing the attached JSON data:
+- MACD histogram direction and signal line crossovers from technicalIndicators
+- RSI divergences and extreme readings from current RSI values
+- Moving average slopes and crossovers using SMA 20/50 data
+- Volume spikes and confirmation patterns from priceData volume array
+- Break of key support/resistance levels using historical price ranges
+- Overall technical momentum and trend strength from price history patterns
+- Timestamp progression in priceData for trend validation
 ''';
   }
 
