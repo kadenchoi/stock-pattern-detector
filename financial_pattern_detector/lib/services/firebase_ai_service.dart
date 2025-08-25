@@ -94,13 +94,7 @@ class FirebaseAiService {
 
       // Create prompt with inline data and text
       final prompt = [
-        Content('user', [
-          TextPart(systemMessage),
-          InlineDataPart(
-            'application/json',
-            utf8.encode(stockDataJson),
-          )
-        ]),
+        Content('user', [TextPart(systemMessage), TextPart(stockDataJson)]),
       ];
       final response = await _model.generateContent(prompt);
 

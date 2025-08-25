@@ -1,5 +1,3 @@
-import 'package:financial_pattern_detector/models/pattern_detection.dart';
-
 import '../models/stock_data.dart';
 import 'firebase_ai_service.dart';
 
